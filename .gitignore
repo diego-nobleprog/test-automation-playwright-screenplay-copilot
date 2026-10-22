@@ -1,0 +1,9 @@
+﻿.env
+**/node_modules/
+**/bin/
+**/obj/
+**/dist/
+**/.angular/
+**/test-results/
+**/playwright-report/
+.playwright-mcp/

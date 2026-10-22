@@ -1,0 +1,393 @@
+﻿PRACTICA 0 - VALIDACION DEL AMBIENTE
+Curso: devtestautoai
+
+OBJETIVO
+
+Verificar que el ambiente local de Windows 11 y los tres
+contenedores Docker se encuentran correctamente preparados.
+
+La practica no desarrolla aplicaciones ni crea pruebas.
+
+============================================================
+1. PREPARAR EL DIRECTORIO
+============================================================
+
+$REPO = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot"
+Set-Location $REPO
+
+============================================================
+2. VALIDAR POWERSHELL Y WSL
+============================================================
+
+$PSVersionTable.PSVersion
+
+wsl --version
+
+wsl --status
+
+wsl --list --verbose
+
+RESULTADO ESPERADO:
+
+PowerShell 5.1.
+WSL 3.0.3.
+Version predeterminada WSL 2.
+Distribucion docker-desktop disponible.
+
+============================================================
+3. VALIDAR GIT
+============================================================
+
+git --version
+
+git config --global user.name
+
+git config --global user.email
+
+git branch --show-current
+
+git remote -v
+
+git status
+
+RESULTADO ESPERADO:
+
+Git disponible.
+Identidad configurada.
+Repositorio Git reconocido.
+Remoto origin configurado.
+
+============================================================
+4. VALIDAR NVM Y NODE.JS
+============================================================
+
+nvm version
+
+nvm list
+
+nvm current
+
+node --version
+
+npm.cmd --version
+
+RESULTADO ESPERADO:
+
+NVM 1.2.2.
+Node.js 22.15.1.
+npm 10.9.2.
+
+============================================================
+5. VALIDAR VISUAL STUDIO CODE
+============================================================
+
+code --version
+
+code --list-extensions --show-versions
+
+RESULTADO ESPERADO:
+
+Visual Studio Code disponible.
+Extension Playwright instalada.
+
+COMPROBACION VISUAL:
+
+Abrir el repositorio en VS Code.
+Verificar Workspace Trust.
+Verificar rama Git.
+Verificar GitHub Copilot Chat.
+
+============================================================
+6. VALIDAR PLAYWRIGHT Y SERENITY/JS
+============================================================
+
+Set-Location ($REPO + "\test-automation")
+
+npx.cmd playwright --version
+
+npx.cmd tsc --version
+
+npm.cmd list --depth=0
+
+RESULTADO ESPERADO:
+
+Playwright 1.57.0.
+TypeScript 5.9.3.
+Serenity/JS 3.37.1.
+Dependencias instaladas correctamente.
+
+============================================================
+7. VALIDAR CHROMIUM Y CODEGEN
+============================================================
+
+Set-Location ($REPO + "\test-automation")
+
+npx.cmd playwright codegen https://example.com
+
+RESULTADO ESPERADO:
+
+Chromium abre correctamente.
+Playwright Inspector aparece.
+Codegen genera codigo TypeScript.
+
+Cerrar Codegen antes de continuar.
+
+============================================================
+8. VALIDAR PLAYWRIGHT UI MODE
+============================================================
+
+Set-Location ($REPO + "\test-automation")
+
+npx.cmd playwright test --ui
+
+RESULTADO ESPERADO:
+
+La interfaz UI Mode abre correctamente.
+
+Puede aparecer "No tests" porque no existen pruebas.
+
+Cerrar UI Mode antes de continuar.
+
+============================================================
+9. VALIDAR TRACE VIEWER
+============================================================
+
+Set-Location ($REPO + "\test-automation")
+
+npx.cmd playwright show-trace
+
+RESULTADO ESPERADO:
+
+Trace Viewer abre correctamente.
+Permite seleccionar un archivo de traza.
+
+Cerrar Trace Viewer.
+
+============================================================
+10. VALIDAR PLAYWRIGHT MCP
+============================================================
+
+Set-Location $REPO
+
+Get-Content ($REPO + "\.vscode\mcp.json") -Raw | ConvertFrom-Json | ConvertTo-Json -Depth 10
+
+RESULTADO ESPERADO:
+
+Configuracion JSON valida.
+Playwright MCP 0.0.83 configurado.
+
+COMPROBACION VISUAL:
+
+Abrir VS Code.
+Abrir GitHub Copilot Chat.
+Seleccionar modo Agent.
+Verificar servidor Playwright MCP.
+
+PROMPT:
+
+Using the Playwright MCP tools, open https://example.com
+and tell me the page title.
+
+RESULTADO ESPERADO:
+
+Example Domain.
+
+============================================================
+11. VALIDAR DOCKER ENGINE
+============================================================
+
+Set-Location $REPO
+
+docker --version
+
+docker compose version
+
+docker version
+
+docker info
+
+RESULTADO ESPERADO:
+
+Docker Engine disponible.
+Docker Compose disponible.
+Servidor Docker responde correctamente.
+
+============================================================
+12. VALIDAR COMPOSE Y LEVANTAR SERVICIOS
+============================================================
+
+Set-Location $REPO
+
+docker compose config --quiet
+
+docker compose config --services
+
+docker compose up -d
+
+docker compose ps
+
+RESULTADO ESPERADO:
+
+frontend Up.
+backend Up.
+postgres Up (healthy).
+
+============================================================
+13. FRONTEND - DESDE POWERSHELL
+============================================================
+
+docker compose exec -T frontend node --version
+
+docker compose exec -T frontend npm --version
+
+docker compose exec -T frontend ls -la /workspace
+
+RESULTADO ESPERADO:
+
+Node.js 22.15.1.
+npm 10.9.2.
+Directorio /workspace disponible.
+
+============================================================
+14. FRONTEND - DENTRO DEL CONTENEDOR
+============================================================
+
+docker compose exec frontend sh
+
+Comandos dentro del contenedor:
+
+node --version
+npm --version
+ls -la /workspace
+exit
+
+RESULTADO ESPERADO:
+
+Mismas versiones y contenido que desde PowerShell.
+
+============================================================
+15. BACKEND - DESDE POWERSHELL
+============================================================
+
+docker compose exec -T backend dotnet --version
+
+docker compose exec -T backend dotnet --list-sdks
+
+docker compose exec -T backend dotnet --list-runtimes
+
+docker compose exec -T backend ls -la /workspace
+
+RESULTADO ESPERADO:
+
+.NET SDK 10.0.402.
+ASP.NET Core Runtime 10.0.13.
+Directorio /workspace disponible.
+
+============================================================
+16. BACKEND - DENTRO DEL CONTENEDOR
+============================================================
+
+docker compose exec backend sh
+
+Comandos dentro del contenedor:
+
+dotnet --version
+dotnet --list-sdks
+dotnet --list-runtimes
+ls -la /workspace
+exit
+
+RESULTADO ESPERADO:
+
+Mismas versiones y contenido que desde PowerShell.
+
+============================================================
+17. POSTGRESQL - DESDE POWERSHELL
+============================================================
+
+docker compose exec -T postgres psql -U lab -d labdb -c "SELECT version();"
+
+docker compose exec -T postgres psql -U lab -d labdb -c "SELECT current_database(), current_user;"
+
+docker compose exec -T postgres psql -U lab -d labdb -c "\l"
+
+RESULTADO ESPERADO:
+
+PostgreSQL 17.
+Base labdb.
+Usuario lab.
+Consultas ejecutadas correctamente.
+
+============================================================
+18. POSTGRESQL - DENTRO DEL CONTENEDOR
+============================================================
+
+docker compose exec postgres sh
+
+Comandos dentro del contenedor:
+
+psql -U lab -d labdb -c "SELECT version();"
+psql -U lab -d labdb -c "SELECT current_database(), current_user;"
+psql -U lab -d labdb -c "\l"
+exit
+
+RESULTADO ESPERADO:
+
+Mismos resultados que desde PowerShell.
+
+============================================================
+19. CONSULTAR LOGS
+============================================================
+
+Set-Location $REPO
+
+docker compose logs --tail 30
+
+docker compose logs --tail 30 postgres
+
+RESULTADO ESPERADO:
+
+PostgreSQL muestra que acepta conexiones.
+
+============================================================
+20. DETENER Y REINICIAR
+============================================================
+
+Set-Location $REPO
+
+docker compose stop
+
+docker compose ps -a
+
+docker compose start
+
+docker compose ps
+
+RESULTADO ESPERADO:
+
+Los tres contenedores se detienen.
+Los tres vuelven a iniciar.
+PostgreSQL vuelve a quedar healthy.
+
+============================================================
+21. VALIDACION FINAL
+============================================================
+
+Set-Location $REPO
+
+git status
+
+docker compose ps
+
+RESULTADO ESPERADO:
+
+Repositorio Git reconocido.
+Tres servicios ejecutandose.
+PostgreSQL healthy.
+
+Durante la preparacion inicial pueden existir archivos
+pendientes de versionar en Git.
+
+============================================================
+FIN DE LA PRACTICA 0
+============================================================

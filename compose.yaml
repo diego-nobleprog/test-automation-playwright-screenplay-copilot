@@ -1,0 +1,41 @@
+﻿services:
+  frontend:
+    image: node:22.15.1-bookworm-slim
+    working_dir: /workspace
+    volumes:
+      - ./frontend:/workspace
+    command: ["tail", "-f", "/dev/null"]
+    networks:
+      - lab-network
+
+  backend:
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    working_dir: /workspace
+    volumes:
+      - ./backend:/workspace
+    command: ["tail", "-f", "/dev/null"]
+    networks:
+      - lab-network
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: lab
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: labdb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lab -d labdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - lab-network
+
+volumes:
+  postgres_data:
+
+networks:
+  lab-network:
+    driver: bridge
