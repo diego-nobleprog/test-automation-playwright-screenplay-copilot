@@ -1,0 +1,612 @@
+﻿PRÁCTICA 3 — PRIMERA PRUEBA UI CON PLAYWRIGHT
+==============================================
+
+OBJETIVO
+--------
+Crear y ejecutar una primera prueba automatizada de interfaz con Playwright sobre la To-Do App del laboratorio.
+
+Durante esta práctica se utilizarán:
+
+- Navegación con page.goto().
+- Locators.
+- Interacciones con elementos de la interfaz.
+- Assertions con expect().
+- Ejecución desde línea de comandos.
+- Playwright UI Mode.
+- Trace Viewer.
+- Playwright Codegen.
+
+
+IMPORTANTE
+----------
+En esta práctica se utiliza Playwright directamente.
+
+Todavía NO se utilizan:
+
+- Screenplay Pattern.
+- Pruebas API.
+- GitHub Copilot.
+- MCP.
+
+
+PRERREQUISITOS
+--------------
+La Práctica 0 debe haberse completado previamente.
+
+El repositorio ya debe existir en:
+
+C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot
+
+Los contenedores del laboratorio ya fueron creados durante la preparación del ambiente.
+
+La To-Do App ya forma parte del repositorio.
+
+Aplicación:
+
+http://localhost:4200
+
+
+ESCENARIO
+---------
+Automatizar el siguiente comportamiento:
+
+1. Abrir la To-Do App.
+
+2. Escribir:
+
+Preparar capacitación
+
+3. Presionar:
+
+Crear tarea
+
+4. Verificar que la tarea aparezca en la interfaz.
+
+5. Verificar que el contador muestre:
+
+Pendientes: 1
+
+
+============================================================
+PASO 0 — INICIAR EL FRONTEND
+============================================================
+
+Abrir Windows PowerShell 5.1.
+
+Ejecutar:
+
+$ErrorActionPreference = "Stop"
+
+$REPO = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot"
+
+Set-Location $REPO
+
+docker compose start frontend
+
+
+IMPORTANTE
+----------
+El contenedor frontend ya existe como parte del ambiente preparado previamente.
+
+Por esta razón utilizamos:
+
+docker compose start frontend
+
+Este comando únicamente inicia el contenedor existente.
+
+No recrea el contenedor.
+
+No modifica su configuración.
+
+No vuelve a crear la aplicación Angular.
+
+
+Si el frontend ya estaba iniciado, no es necesario reiniciarlo.
+
+
+ARRANQUE DE ANGULAR
+-------------------
+Cuando el frontend inicia, Angular puede tardar algunos segundos en realizar la compilación inicial.
+
+Después abrir en el navegador:
+
+http://localhost:4200
+
+
+RESULTADO ESPERADO
+------------------
+
+Debe mostrarse la To-Do App.
+
+La pantalla contiene:
+
+- To-Do App.
+- Laboratorio de automatización.
+- Campo Nueva tarea.
+- Botón Crear tarea.
+- Contador de tareas pendientes.
+- Contador de tareas completadas.
+- Sección Tareas.
+
+
+============================================================
+PASO 0.1 — VERIFICACIÓN OPCIONAL DEL FRONTEND
+============================================================
+
+Si se desea comprobar el estado del contenedor:
+
+$ErrorActionPreference = "Stop"
+
+$REPO = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot"
+
+Set-Location $REPO
+
+docker compose ps frontend
+
+
+El servicio debe aparecer con estado:
+
+Up
+
+o:
+
+Running
+
+
+El puerto debe incluir:
+
+0.0.0.0:4200->4200/tcp
+
+
+============================================================
+PASO 0.2 — CONSULTAR LOGS SOLAMENTE SI ES NECESARIO
+============================================================
+
+Si Angular todavía está iniciando:
+
+$ErrorActionPreference = "Stop"
+
+$REPO = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot"
+
+Set-Location $REPO
+
+docker compose logs --tail 50 frontend
+
+
+Cuando Angular termine de compilar deben aparecer mensajes equivalentes a:
+
+Application bundle generation complete.
+
+Watch mode enabled. Watching for file changes...
+
+Local: http://localhost:4200/
+
+
+IMPORTANTE
+----------
+Los logs pueden contener mensajes de ejecuciones anteriores del contenedor.
+
+Por ejemplo:
+
+npm error signal SIGTERM
+
+puede corresponder a una instancia anterior de Angular que fue detenida.
+
+Después de ese mensaje puede existir un nuevo arranque del servidor.
+
+Para determinar el estado actual se deben revisar las últimas líneas del log.
+
+
+No utilizar durante el flujo normal:
+
+docker compose logs -f frontend
+
+porque ese comando permanece siguiendo los logs hasta que se interrumpe manualmente.
+
+
+============================================================
+PASO 1 — REVISAR LA PRIMERA PRUEBA UI
+============================================================
+
+La prueba se encuentra en:
+
+C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot\test-automation\practices\day-01\practice-03\first-ui-test.spec.ts
+
+
+Contenido:
+
+// Importamos las funciones test y expect proporcionadas por Playwright Test.
+import { test, expect } from '@playwright/test';
+
+// Definimos nuestra primera prueba automatizada de interfaz.
+test('crear una tarea desde la interfaz', async ({ page }) => {
+
+  // Abrimos la aplicación To-Do App.
+  await page.goto('http://localhost:4200');
+
+  // Localizamos el campo de captura utilizando su etiqueta accesible.
+  const taskInput = page.getByLabel('Nueva tarea');
+
+  // Escribimos el nombre de la tarea.
+  await taskInput.fill('Preparar capacitación');
+
+  // Localizamos el botón por su rol y por el texto que ve el usuario.
+  const createButton = page.getByRole('button', { name: 'Crear tarea' });
+
+  // Hacemos clic para crear la tarea.
+  await createButton.click();
+
+  // Localizamos específicamente la tarea que acabamos de crear.
+  const createdTask = page.getByText('Preparar capacitación');
+
+  // Verificamos que la nueva tarea aparezca en la interfaz.
+  await expect(createdTask).toBeVisible();
+
+  // Localizamos el contador de tareas pendientes.
+  const pendingCount = page.getByTestId('pending-count');
+
+  // Verificamos que ahora exista una tarea pendiente.
+  await expect(pendingCount).toHaveText('Pendientes: 1');
+});
+
+
+============================================================
+PASO 2 — EJECUTAR LA PRUEBA DESDE LÍNEA DE COMANDOS
+============================================================
+
+Ejecutar:
+
+$ErrorActionPreference = "Stop"
+
+$REPO = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot"
+$AUTOMATION = $REPO + "\test-automation"
+$TEST = "practices/day-01/practice-03/first-ui-test.spec.ts"
+
+Set-Location $AUTOMATION
+
+npx.cmd playwright test $TEST --headed
+
+
+RESULTADO ESPERADO
+------------------
+
+Playwright abre el navegador.
+
+La prueba:
+
+1. Abre la To-Do App.
+2. Captura la tarea.
+3. Presiona Crear tarea.
+4. Comprueba que la tarea sea visible.
+5. Comprueba que exista una tarea pendiente.
+
+Al terminar debe mostrarse información equivalente a:
+
+Running 1 test using 1 worker
+
+ok 1 ... crear una tarea desde la interfaz
+
+1 passed
+
+
+============================================================
+PASO 3 — IDENTIFICAR LAS PARTES PRINCIPALES DE LA PRUEBA
+============================================================
+
+NAVEGACIÓN
+----------
+
+await page.goto('http://localhost:4200');
+
+Abre la aplicación que será probada.
+
+
+LOCATOR POR ETIQUETA
+--------------------
+
+const taskInput = page.getByLabel('Nueva tarea');
+
+Localiza el campo utilizando información accesible de la interfaz.
+
+
+INTERACCIÓN
+-----------
+
+await taskInput.fill('Preparar capacitación');
+
+Escribe información dentro del campo.
+
+
+LOCATOR POR ROL
+---------------
+
+const createButton = page.getByRole('button', { name: 'Crear tarea' });
+
+Localiza el botón mediante su rol y mediante el nombre que ve el usuario.
+
+
+INTERACCIÓN
+-----------
+
+await createButton.click();
+
+Ejecuta la acción de creación.
+
+
+LOCATOR POR TEXTO
+-----------------
+
+const createdTask = page.getByText('Preparar capacitación');
+
+Localiza específicamente el contenido que esperamos encontrar después de crear la tarea.
+
+
+ASSERTION
+---------
+
+await expect(createdTask).toBeVisible();
+
+Comprueba que la tarea creada aparezca realmente en la interfaz.
+
+
+LOCATOR POR TEST ID
+-------------------
+
+const pendingCount = page.getByTestId('pending-count');
+
+Localiza el contador de tareas pendientes mediante un identificador pensado para automatización.
+
+
+ASSERTION
+---------
+
+await expect(pendingCount).toHaveText('Pendientes: 1');
+
+Comprueba que el estado observable de la aplicación haya cambiado después de crear la tarea.
+
+
+OBSERVACIÓN
+-----------
+La prueba no utiliza:
+
+page.waitForTimeout(...)
+
+Playwright espera automáticamente a que las condiciones de las assertions se cumplan dentro del timeout configurado.
+
+Esto evita utilizar esperas fijas arbitrarias.
+
+
+============================================================
+PASO 4 — PLAYWRIGHT UI MODE
+============================================================
+
+Ejecutar:
+
+$ErrorActionPreference = "Stop"
+
+$REPO = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot"
+$AUTOMATION = $REPO + "\test-automation"
+$TEST = "practices/day-01/practice-03/first-ui-test.spec.ts"
+
+Set-Location $AUTOMATION
+
+npx.cmd playwright test $TEST --ui
+
+
+DENTRO DE UI MODE
+-----------------
+
+1. Localizar la prueba:
+
+crear una tarea desde la interfaz
+
+2. Ejecutarla utilizando el botón Play.
+
+3. Revisar la secuencia de acciones.
+
+4. Seleccionar distintos pasos de la ejecución.
+
+5. Revisar los estados Before y After.
+
+6. Revisar el locator relacionado con cada acción.
+
+7. Revisar el código fuente asociado.
+
+8. Explorar las pestañas disponibles:
+
+- Locator.
+- Source.
+- Call.
+- Log.
+- Errors.
+- Console.
+- Network.
+
+
+RESULTADO ESPERADO
+------------------
+
+La prueba debe terminar correctamente.
+
+Debe mostrarse:
+
+1/1 passed (100%)
+
+
+============================================================
+PASO 5 — TRACE VIEWER
+============================================================
+
+Cerrar UI Mode antes de continuar.
+
+Ejecutar:
+
+$ErrorActionPreference = "Stop"
+
+$REPO = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot"
+$AUTOMATION = $REPO + "\test-automation"
+$TEST = "practices/day-01/practice-03/first-ui-test.spec.ts"
+
+Set-Location $AUTOMATION
+
+npx.cmd playwright test $TEST --trace on
+
+if ($LASTEXITCODE -ne 0) {
+    throw "La ejecución con trace falló."
+}
+
+$TRACE = Get-ChildItem -Path ($AUTOMATION + "\test-results") -Filter "trace.zip" -Recurse | Select-Object -First 1
+
+if ($null -eq $TRACE) {
+    throw "No se encontró trace.zip."
+}
+
+npx.cmd playwright show-trace $TRACE.FullName
+
+
+DENTRO DE TRACE VIEWER
+----------------------
+
+Revisar:
+
+- Timeline.
+- Acciones ejecutadas.
+- Duración de cada paso.
+- Before.
+- After.
+- Snapshots.
+- Locator.
+- Source.
+- Console.
+- Network.
+
+
+Trace Viewer permite analizar una ejecución después de que la prueba haya terminado.
+
+
+A diferencia de UI Mode, el trace representa evidencia almacenada de una ejecución ya realizada.
+
+
+============================================================
+PASO 6 — PLAYWRIGHT CODEGEN
+============================================================
+
+Cerrar Trace Viewer antes de continuar.
+
+Ejecutar:
+
+$ErrorActionPreference = "Stop"
+
+$REPO = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot"
+$AUTOMATION = $REPO + "\test-automation"
+
+Set-Location $AUTOMATION
+
+npx.cmd playwright codegen http://localhost:4200
+
+
+DENTRO DE CODEGEN
+-----------------
+
+1. Seleccionar el campo:
+
+Nueva tarea
+
+2. Escribir:
+
+Preparar capacitación
+
+3. Presionar:
+
+Crear tarea
+
+4. Observar el código que genera Playwright Inspector.
+
+5. Revisar los locators sugeridos.
+
+
+EJEMPLOS
+--------
+
+Codegen puede proponer locators equivalentes a:
+
+page.getByRole('textbox', { name: 'Nueva tarea' })
+
+page.getByRole('button', { name: 'Crear tarea' })
+
+
+IMPORTANTE
+----------
+Codegen es una herramienta de apoyo.
+
+El código generado debe revisarse antes de incorporarlo a una suite de automatización.
+
+No debe considerarse automáticamente como código final.
+
+En esta práctica Codegen se utiliza para explorar cómo Playwright puede generar acciones y locators a partir de la interacción con una aplicación real.
+
+
+============================================================
+RESULTADO FINAL ESPERADO
+============================================================
+
+Al finalizar la práctica:
+
+- El frontend existente puede iniciarse mediante Docker Compose.
+
+- La To-Do App está disponible en:
+
+http://localhost:4200
+
+- La prueba existe en:
+
+C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot\test-automation\practices\day-01\practice-03\first-ui-test.spec.ts
+
+- La prueba puede ejecutarse correctamente desde línea de comandos.
+
+- La prueba puede ejecutarse e inspeccionarse desde UI Mode.
+
+- Puede generarse un trace de la ejecución.
+
+- Trace Viewer permite analizar la ejecución.
+
+- Codegen registra las interacciones realizadas sobre la aplicación.
+
+- Se identifican navegación, locators, interacciones y assertions básicas de Playwright.
+
+
+============================================================
+CRITERIOS DE VALIDACIÓN
+============================================================
+
+La práctica se considera completada cuando:
+
+1. La To-Do App puede abrirse en:
+
+http://localhost:4200
+
+2. La prueba termina con:
+
+1 passed
+
+3. La prueba puede ejecutarse desde UI Mode.
+
+4. UI Mode permite inspeccionar los pasos de la ejecución.
+
+5. Trace Viewer abre correctamente el trace generado.
+
+6. Codegen registra las acciones realizadas sobre la aplicación.
+
+7. Se identifican correctamente:
+
+- Navegación.
+- Locators.
+- Interacciones.
+- Assertions.
+
+
+============================================================
+ARCHIVO PRINCIPAL DE LA PRÁCTICA
+============================================================
+
+C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot\test-automation\practices\day-01\practice-03\first-ui-test.spec.ts
