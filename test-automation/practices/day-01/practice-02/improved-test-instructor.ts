@@ -25,17 +25,19 @@ test('crear y completar una tarea', async ({ page }) => {
    * En la prueba anterior utilizábamos waitForTimeout para esperar una cantidad
    * arbitraria de segundos.
    *
-   * Aquí esperamos una condición real de la aplicación:
+   * ¿Cómo lo mejoramos?
+   *
+   * Esperamos una condición real de la aplicación:
    * que la tarea creada sea visible.
    *
    * Playwright esperará automáticamente hasta que la condición se cumpla
    * o hasta que se alcance el timeout configurado.
    */
   // Localizamos específicamente la tarea que acabamos de crear.
-  const task = page.getByText('Preparar capacitación');
+  const taskText = page.getByText('Preparar capacitación');
 
   // Verificamos que la tarea aparezca en la interfaz.
-  await expect(task).toBeVisible();
+  await expect(taskText).toBeVisible();
 
   /*
    * MEJORA 2: UTILIZAMOS UN LOCALIZADOR MÁS ESTABLE
@@ -44,15 +46,20 @@ test('crear y completar una tarea', async ({ page }) => {
    *
    * div:nth-child(2) > button:nth-child(3)
    *
-   * buscamos el elemento utilizando información relacionada con su función.
+   * ¿Cómo lo mejoramos?
+   *
+   * Buscamos el control por su rol accesible y por el nombre que representa
+   * su función para el usuario.
    *
    * Esto reduce el acoplamiento entre la prueba y la estructura interna del HTML.
    */
-  // Localizamos el botón encargado de completar específicamente nuestra tarea.
-  const completeButton = page.getByRole('button', { name: 'Completar Preparar capacitación' });
+  // Localizamos el checkbox encargado de completar específicamente nuestra tarea.
+  const completeCheckbox = page.getByRole('checkbox', {
+    name: 'Completar Preparar capacitación'
+  });
 
-  // Hacemos clic sobre el botón para completar la tarea.
-  await completeButton.click();
+  // Marcamos la tarea como completada.
+  await completeCheckbox.check();
 
   /*
    * MEJORA 3: LA PRUEBA CONTROLA SUS PROPIOS DATOS
@@ -63,14 +70,18 @@ test('crear y completar una tarea', async ({ page }) => {
    *
    * y suponía que ya existía alguna tarea.
    *
-   * Aquí la propia prueba crea "Preparar capacitación"
+   * ¿Cómo lo mejoramos?
+   *
+   * La propia prueba crea "Preparar capacitación"
    * antes de intentar trabajar con ella.
    *
    * Por lo tanto, el escenario no depende de información dejada
    * previamente por otra ejecución.
    */
-  // Localizamos el contenedor de la tarea utilizando un identificador estable.
-  const completedTask = page.getByTestId('task-preparar-capacitacion');
+  // Localizamos el contenedor correspondiente específicamente a la tarea creada.
+  const completedTask = page.locator('.task').filter({
+    hasText: 'Preparar capacitación'
+  });
 
   /*
    * MEJORA 4: LA ASERCIÓN COMPRUEBA EL COMPORTAMIENTO REAL
@@ -79,9 +90,11 @@ test('crear y completar una tarea', async ({ page }) => {
    *
    * Eso no demostraba que realmente hubiera sido completada.
    *
-   * Aquí comprobamos explícitamente que el estado de la tarea sea "completed".
+   * ¿Cómo lo mejoramos?
+   *
+   * Comprobamos explícitamente que el estado de la tarea cambió a "completed".
    */
-  // Verificamos que la tarea tenga el estado esperado después de completar la acción.
+  // Verificamos el estado real de la tarea después de marcar el checkbox.
   await expect(completedTask).toHaveAttribute('data-status', 'completed');
 
 // Cerramos la definición de la prueba.
@@ -93,9 +106,11 @@ test('crear y completar una tarea', async ({ page }) => {
  * En la versión anterior existía una prueba que creaba una tarea
  * y otra prueba distinta suponía que ese dato seguiría disponible.
  *
+ * ¿Cómo lo mejoramos?
+ *
  * En esta versión el escenario crea todos los datos que necesita
  * dentro de la misma prueba.
  *
- * Eso permite ejecutar esta prueba de manera aislada sin depender
+ * Esto permite ejecutar la prueba de manera aislada sin depender
  * del orden de ejecución de otras pruebas.
  */

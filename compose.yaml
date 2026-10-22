@@ -4,7 +4,9 @@
     working_dir: /workspace
     volumes:
       - ./frontend:/workspace
-    command: ["tail", "-f", "/dev/null"]
+    command: ["npx", "ng", "serve", "--host", "0.0.0.0", "--port", "4200"]
+    ports:
+      - "4200:4200"
     networks:
       - lab-network
 
@@ -39,3 +41,4 @@ volumes:
 networks:
   lab-network:
     driver: bridge
+

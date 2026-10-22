@@ -1,0 +1,79 @@
+﻿<main class="page">
+  <mat-card class="todo-card">
+    <mat-card-header>
+      <mat-card-title>To-Do App</mat-card-title>
+      <mat-card-subtitle>Laboratorio de automatización</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <section class="create-task">
+        <mat-form-field appearance="outline" class="task-input">
+          <mat-label>Nueva tarea</mat-label>
+
+          <input
+            matInput
+            aria-label="Nueva tarea"
+            [value]="newTask()"
+            (input)="updateNewTask($any($event.target).value)"
+            (keyup.enter)="createTask()"
+          />
+        </mat-form-field>
+
+        <button
+          mat-flat-button
+          type="button"
+          (click)="createTask()"
+        >
+          Crear tarea
+        </button>
+      </section>
+
+      <section class="summary" aria-label="Resumen de tareas">
+        <span data-testid="pending-count">
+          Pendientes: {{ pendingCount() }}
+        </span>
+
+        <span data-testid="completed-count">
+          Completadas: {{ completedCount() }}
+        </span>
+      </section>
+
+      <section class="tasks" aria-label="Lista de tareas">
+        <h2>Tareas</h2>
+
+        @if (tasks().length === 0) {
+          <p class="empty-state">
+            No hay tareas todavía.
+          </p>
+        }
+
+        @for (task of tasks(); track task.id) {
+          <article
+            class="task"
+            [attr.data-testid]="'task-' + task.id"
+            [attr.data-status]="task.completed ? 'completed' : 'pending'"
+          >
+            <mat-checkbox
+              [checked]="task.completed"
+              [attr.aria-label]="'Completar ' + task.title"
+              (change)="toggleTask(task.id)"
+            >
+              <span [class.completed]="task.completed">
+                {{ task.title }}
+              </span>
+            </mat-checkbox>
+
+            <button
+              mat-button
+              type="button"
+              [attr.aria-label]="'Eliminar ' + task.title"
+              (click)="deleteTask(task.id)"
+            >
+              Eliminar
+            </button>
+          </article>
+        }
+      </section>
+    </mat-card-content>
+  </mat-card>
+</main>
