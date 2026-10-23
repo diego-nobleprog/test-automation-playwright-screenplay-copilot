@@ -1,4 +1,4 @@
-﻿# Test Automation Laboratory
+# Test Automation Laboratory
 
 Curso: Test Automation for Development Teams: Playwright, Screenplay Pattern and AI-Assisted Automation with GitHub Copilot
 
@@ -11,7 +11,18 @@ Este repositorio contiene el laboratorio utilizado durante el curso de automatiz
 
 La metodologia consiste en demostrar ejercicios previamente construidos y validados, reproducir sus comandos y realizar modificaciones pequenas y controladas.
 
-La aplicacion bajo prueba (SUT) utilizara Angular, ASP.NET Core y PostgreSQL.
+La aplicacion bajo prueba (SUT) utiliza Angular, ASP.NET Core y PostgreSQL.
+
+Un principio importante del laboratorio es la reproducibilidad:
+
+- Los contenedores pueden eliminarse y recrearse.
+- Los volumenes Docker pueden eliminarse y recrearse.
+- La base PostgreSQL puede eliminarse y recrearse.
+- Las dependencias Node.js no se almacenan en Git.
+- Las dependencias se reconstruyen desde package-lock.json.
+- El laboratorio no depende de residuos de ejecuciones anteriores.
+
+El objetivo es que el mismo repositorio pueda reconstruir el ambiente tanto en la maquina Instructor como en una maquina Fresh Start.
 
 ## 2. Arquitectura
 
@@ -54,7 +65,7 @@ Docker Compose administra los servicios de la aplicacion bajo prueba.
 
 No se requiere instalar .NET ni PostgreSQL directamente en Windows.
 
-La arquitectura actual utiliza un unico compose.yaml, sin Dockerfiles.
+La arquitectura utiliza un unico compose.yaml, sin Dockerfiles.
 
 ## 3. Versiones del laboratorio
 
@@ -100,12 +111,17 @@ test-automation-playwright-screenplay-copilot/
 |   +-- mcp.json
 |
 |-- frontend/
+|   |-- package.json
+|   |-- package-lock.json
+|   +-- src/
+|
 |-- backend/
 |-- database/
 |
 |-- test-automation/
 |   |-- package.json
-|   +-- package-lock.json
+|   |-- package-lock.json
+|   +-- practices/
 |
 |-- practices/
 |   +-- practice-00-environment-validation.txt
@@ -176,7 +192,7 @@ node --version
 npm.cmd --version
 ```
 
-Instalar dependencias existentes del proyecto de automatizacion:
+Reconstruir las dependencias del proyecto de automatizacion:
 
 ```powershell
 $REPO = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot"
@@ -184,13 +200,19 @@ Set-Location ($REPO + "\test-automation")
 npm.cmd ci
 ```
 
-Instalar Chromium:
+Instalar Chromium para Playwright:
 
-```text
+```powershell
 npx.cmd playwright install chromium
 ```
 
+node_modules no se almacena en Git.
+
+package-lock.json es la fuente utilizada para reconstruir las dependencias de forma reproducible.
+
 ## 8. Chuleta de Playwright
+
+Preparar directorio:
 
 ```powershell
 $REPO = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot"
@@ -199,7 +221,7 @@ Set-Location ($REPO + "\test-automation")
 
 Consultar versiones:
 
-```text
+```powershell
 npx.cmd playwright --version
 npx.cmd tsc --version
 npm.cmd list --depth=0
@@ -207,31 +229,31 @@ npm.cmd list --depth=0
 
 Abrir Codegen:
 
-```text
+```powershell
 npx.cmd playwright codegen https://example.com
 ```
 
 Abrir UI Mode:
 
-```text
+```powershell
 npx.cmd playwright test --ui
 ```
 
 Abrir Trace Viewer:
 
-```text
+```powershell
 npx.cmd playwright show-trace
 ```
 
-Cuando existan pruebas:
+Ejecutar pruebas:
 
-```text
+```powershell
 npx.cmd playwright test
 npx.cmd playwright test --headed
 npx.cmd playwright show-report
 ```
 
-## 9. Chuleta general de Docker
+## 9. Chuleta diaria de Docker
 
 Preparar directorio:
 
@@ -240,48 +262,25 @@ $REPO = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot"
 Set-Location $REPO
 ```
 
-Consultar herramientas:
-
-```powershell
-docker --version
-docker compose version
-docker version
-docker info
-```
-
-Validar configuracion Compose:
-
-```powershell
-docker compose config --quiet
-docker compose config --services
-```
-
-Descargar imagenes:
-
-```powershell
-docker compose pull
-```
-
-Crear e iniciar contenedores:
+Los comandos principales para trabajar diariamente son:
 
 ```powershell
 docker compose up -d
-```
-
-Consultar contenedores:
-
-```powershell
 docker compose ps
-docker compose ps -a
-docker ps -a
+docker compose restart
+docker compose stop
+docker compose start
+docker compose down
 ```
 
-Consultar imagenes:
+Significado:
 
-```powershell
-docker compose images
-docker images
-```
+- docker compose up -d crea los recursos faltantes e inicia los servicios.
+- docker compose ps muestra el estado de los servicios.
+- docker compose restart reinicia los servicios.
+- docker compose stop detiene los contenedores sin eliminarlos.
+- docker compose start inicia contenedores previamente detenidos.
+- docker compose down elimina los contenedores y la red del proyecto.
 
 Consultar logs:
 
@@ -292,39 +291,185 @@ docker compose logs --tail 30 backend
 docker compose logs --tail 30 postgres
 ```
 
-Detener los contenedores:
+Validar Compose:
 
 ```powershell
-docker compose stop
+docker compose config --quiet
+docker compose config --services
 ```
 
-Iniciar contenedores existentes:
+Consultar imagenes:
 
 ```powershell
-docker compose start
+docker compose images
+docker images
 ```
 
-Detener y eliminar contenedores del proyecto:
+## 10. Reconstruccion de Docker desde cero
+
+El laboratorio esta preparado para que los recursos Docker puedan eliminarse completamente y reconstruirse.
+
+Eliminar contenedores, red y volumenes del proyecto:
 
 ```powershell
-docker compose down
+$REPO = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot"
+Set-Location $REPO
+
+docker compose down -v --remove-orphans
 ```
 
-Recrear contenedores conservando los volumenes nombrados:
+Este comando elimina, entre otros recursos:
+
+- contenedores frontend, backend y postgres;
+- red Docker Compose;
+- volumen postgres_data;
+- volumen frontend_node_modules;
+- datos almacenados en PostgreSQL.
+
+La eliminacion de estos recursos no destruye el laboratorio.
+
+Reconstruir Docker:
 
 ```powershell
-docker compose up -d --force-recreate
+docker compose pull
+docker compose up -d
+docker compose ps
 ```
 
-IMPORTANTE:
+Durante el inicio del frontend, Compose ejecuta automaticamente:
 
-docker compose down conserva los volumenes nombrados.
+```text
+npm ci
+npx ng serve
+```
 
-docker compose down -v elimina tambien los volumenes del proyecto y puede provocar perdida de datos.
+Las dependencias Angular se reconstruyen utilizando:
 
-No utilizar down -v para limpiezas ordinarias del laboratorio.
+```text
+frontend/package.json
+frontend/package-lock.json
+```
 
-## 10. Acceso al frontend
+El volumen frontend_node_modules contiene las dependencias instaladas dentro del ambiente Docker.
+
+No es necesario almacenar frontend/node_modules en Git.
+
+## 11. Reconstruccion completa en una maquina Fresh Start
+
+Partiendo de:
+
+- Windows y herramientas instaladas durante la Practica 0;
+- Docker Desktop funcionando;
+- Node.js 22.15.1 activo;
+- repositorio clonado;
+
+reconstruir primero la automatizacion local:
+
+```powershell
+$REPO = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot"
+
+Set-Location ($REPO + "\test-automation")
+
+npm.cmd ci
+npx.cmd playwright install chromium
+```
+
+Reconstruir despues la aplicacion bajo prueba:
+
+```powershell
+Set-Location $REPO
+
+docker compose pull
+docker compose up -d
+docker compose ps
+```
+
+No se requiere:
+
+- subir node_modules a Git;
+- instalar Angular globalmente;
+- instalar .NET directamente en Windows;
+- instalar PostgreSQL directamente en Windows;
+- crear un archivo .env;
+- conservar contenedores anteriores;
+- conservar volumenes anteriores;
+- conservar una base PostgreSQL anterior.
+
+## 12. Prueba de reconstruccion total
+
+Para comprobar la reproducibilidad del laboratorio se puede destruir Docker completamente:
+
+```powershell
+$REPO = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot"
+Set-Location $REPO
+
+docker compose down -v --remove-orphans
+```
+
+Tambien pueden eliminarse las dependencias locales de automatizacion:
+
+```powershell
+Remove-Item ($REPO + "\test-automation\node_modules") -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item ($env:LOCALAPPDATA + "\ms-playwright") -Recurse -Force -ErrorAction SilentlyContinue
+```
+
+Despues se reconstruye:
+
+```powershell
+Set-Location ($REPO + "\test-automation")
+
+npm.cmd ci
+npx.cmd playwright install chromium
+
+Set-Location $REPO
+
+docker compose pull
+docker compose up -d
+docker compose ps
+```
+
+Validar el frontend:
+
+```powershell
+curl.exe -I http://localhost:4200
+```
+
+Resultado esperado:
+
+```text
+HTTP/1.1 200 OK
+```
+
+Validar PostgreSQL:
+
+```powershell
+docker compose exec -T postgres psql -U lab -d labdb -c "SELECT current_database(), current_user;"
+```
+
+Resultado esperado:
+
+```text
+current_database | current_user
+-----------------+-------------
+labdb            | lab
+```
+
+Validar Playwright con la prueba del Dia 1:
+
+```powershell
+Set-Location ($REPO + "\test-automation")
+npx.cmd playwright test practices/day-01/practice-03/first-ui-test.spec.ts
+```
+
+Resultado esperado:
+
+```text
+1 passed
+```
+
+Este ciclo puede repetirse tantas veces como sea necesario.
+
+## 13. Acceso al frontend
 
 Entrar al contenedor:
 
@@ -349,7 +494,7 @@ docker compose exec -T frontend npm --version
 docker compose exec -T frontend ls -la /workspace
 ```
 
-## 11. Acceso al backend
+## 14. Acceso al backend
 
 Entrar al contenedor:
 
@@ -376,7 +521,7 @@ docker compose exec -T backend dotnet --list-runtimes
 docker compose exec -T backend ls -la /workspace
 ```
 
-## 12. Acceso a PostgreSQL
+## 15. Acceso a PostgreSQL
 
 Entrar al contenedor:
 
@@ -406,33 +551,20 @@ Configuracion:
 ```text
 Database: labdb
 Username: lab
+Password: lab
 Hostname Docker: postgres
 Internal port: 5432
 ```
 
-La contrasena se establece mediante POSTGRES_PASSWORD en .env.
+La contrasena lab es deliberadamente una credencial dummy para el laboratorio local y se encuentra declarada en compose.yaml.
 
-El volumen postgres_data conserva los datos cuando se detienen o recrean los contenedores.
+No se requiere archivo .env para PostgreSQL.
 
-## 13. Configuracion local de PostgreSQL
+El volumen postgres_data conserva los datos mientras exista.
 
-Antes de iniciar por primera vez Docker Compose se requiere un archivo .env en la raiz.
+Si postgres_data se elimina, Docker Compose crea un volumen nuevo y PostgreSQL inicializa nuevamente labdb.
 
-Generar una contrasena para un ambiente nuevo:
-
-```powershell
-$REPO = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot"
-if (-not (Test-Path ($REPO + "\.env"))) {
-    $PASSWORD = "lab_" + [guid]::NewGuid().ToString("N")
-    Set-Content -Path ($REPO + "\.env") -Value ("POSTGRES_PASSWORD=" + $PASSWORD) -Encoding ascii
-}
-```
-
-No subir .env al repositorio.
-
-Cambiar POSTGRES_PASSWORD despues de inicializar el volumen no cambia automaticamente la contrasena interna de PostgreSQL.
-
-## 14. GitHub Copilot y Playwright MCP
+## 16. GitHub Copilot y Playwright MCP
 
 Abrir VS Code como usuario normal, no como administrador.
 
@@ -465,8 +597,14 @@ Resultado esperado:
 Example Domain
 ```
 
-## 15. Practicas
+## 17. Practicas
 
-Los archivos de instrucciones se encuentran en practices/.
+Los archivos de instrucciones se encuentran en practices/ y test-automation/practices/.
 
-Cada practica tiene su propio archivo TXT con comandos y validaciones.
+Cada practica tiene su propio archivo TXT con comandos, explicaciones y validaciones.
+
+Las practicas se construyen y validan primero en la maquina Instructor.
+
+Posteriormente se adaptan para que los participantes puedan reproducirlas sobre una maquina Fresh Start.
+
+El repositorio y sus comandos de reconstruccion deben ser suficientes para recuperar el laboratorio sin depender del estado previo de la maquina.
