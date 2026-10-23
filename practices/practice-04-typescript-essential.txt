@@ -1,0 +1,274 @@
+PRACTICA 4 - TYPESCRIPT ESENCIAL
+Curso: devtestautoai
+
+OBJETIVO
+
+Aplicar las caracteristicas principales de TypeScript que
+utilizaremos posteriormente en la automatizacion de pruebas.
+
+Durante la practica se modelaran tareas de una aplicacion To-Do
+utilizando tipos, interfaces, colecciones, funciones y codigo
+asincrono.
+
+============================================================
+1. PREPARAR EL DIRECTORIO
+============================================================
+
+$REPO = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot"
+$TEST_AUTOMATION = $REPO + "\test-automation"
+
+Set-Location $TEST_AUTOMATION
+
+============================================================
+2. REVISAR EL ARCHIVO DE LA PRACTICA
+============================================================
+
+Get-Content ($TEST_AUTOMATION + "\practices\day-02\practice-04\typescript-essential-instructor.ts")
+
+ELEMENTOS A IDENTIFICAR:
+
+interface Task
+
+Task[]
+
+string
+
+boolean
+
+funciones tipadas
+
+Task[]
+
+number
+
+Promise<Task[]>
+
+Promise<void>
+
+async
+
+await
+
+============================================================
+3. INTERFAZ TASK
+============================================================
+
+La interfaz Task define la estructura que debe tener
+cada tarea.
+
+interface Task {
+  title: string;
+  completed: boolean;
+}
+
+title debe contener texto.
+
+completed solamente puede contener:
+
+true
+
+o:
+
+false
+
+============================================================
+4. COLECCION TIPADA
+============================================================
+
+Las tareas se almacenan utilizando:
+
+Task[]
+
+Esto indica que todos los elementos de la coleccion deben
+cumplir con la estructura definida por Task.
+
+Ejemplo:
+
+const tasks: Task[] = [
+  {
+    title: 'Preparar capacitacion',
+    completed: false,
+  },
+];
+
+============================================================
+5. FUNCIONES TIPADAS
+============================================================
+
+La practica contiene funciones que reciben y devuelven
+tipos definidos explicitamente.
+
+Ejemplo:
+
+function getPendingTasks(tasks: Task[]): Task[]
+
+La funcion recibe:
+
+Task[]
+
+y devuelve:
+
+Task[]
+
+Tambien se utiliza:
+
+function countPendingTasks(tasks: Task[]): number
+
+La funcion recibe una coleccion de tareas y devuelve
+un numero.
+
+============================================================
+6. FILTRAR TAREAS
+============================================================
+
+La practica utiliza filter para obtener tareas segun
+su estado.
+
+Tareas pendientes:
+
+tasks.filter(task => !task.completed)
+
+Tareas completadas:
+
+tasks.filter(task => task.completed)
+
+RESULTADO:
+
+Las operaciones mantienen objetos de tipo Task.
+
+============================================================
+7. CODIGO ASINCRONO
+============================================================
+
+La funcion:
+
+async function loadTasks(): Promise<Task[]>
+
+representa una operacion asincrona que devuelve una
+coleccion de tareas.
+
+La funcion principal utiliza:
+
+await loadTasks()
+
+Esto permite esperar el resultado antes de continuar.
+
+============================================================
+8. VALIDAR TYPESCRIPT
+============================================================
+
+Set-Location $TEST_AUTOMATION
+
+npx.cmd tsc practices/day-02/practice-04/typescript-essential-instructor.ts --noEmit --target ES2022 --moduleResolution node
+
+RESULTADO ESPERADO:
+
+El comando termina sin errores de TypeScript.
+
+No se genera ningun archivo JavaScript porque se utiliza:
+
+--noEmit
+
+El parametro:
+
+--moduleResolution node
+
+indica a TypeScript que resuelva las dependencias utilizando
+el mecanismo de resolucion de modulos de Node.js.
+
+
+============================================================
+9. COMPILAR EL EJERCICIO
+============================================================
+
+Set-Location $TEST_AUTOMATION
+
+New-Item -ItemType Directory -Force -Path ($TEST_AUTOMATION + "\temp") | Out-Null
+
+npx.cmd tsc practices/day-02/practice-04/typescript-essential-instructor.ts --target ES2022 --module commonjs --moduleResolution node --outDir temp
+
+RESULTADO ESPERADO:
+
+Se genera:
+
+temp\typescript-essential-instructor.js
+
+
+============================================================
+10. EJECUTAR EL EJERCICIO
+============================================================
+
+Set-Location $TEST_AUTOMATION
+
+node .\temp\typescript-essential-instructor.js
+
+RESULTADO ESPERADO:
+
+Se muestran:
+
+- Todas las tareas.
+- Tareas pendientes.
+- Tareas completadas.
+- Cantidad de tareas pendientes.
+
+La cantidad esperada de tareas pendientes es:
+
+2
+
+============================================================
+11. CONCEPTOS APLICADOS
+============================================================
+
+Durante la practica se utilizaron:
+
+string
+
+boolean
+
+interface
+
+objetos tipados
+
+Task[]
+
+funciones
+
+parametros tipados
+
+valores de retorno
+
+filter
+
+async
+
+await
+
+Promise<T>
+
+============================================================
+12. ALCANCE
+============================================================
+
+Esta practica utiliza solamente TypeScript.
+
+Todavia no se utilizan:
+
+Playwright UI
+
+Screenplay
+
+Actor
+
+Task
+
+Interaction
+
+Question
+
+Serenity/JS
+
+Estos conceptos se incorporaran posteriormente.
+
+============================================================
+FIN DE LA PRACTICA 4
+============================================================
