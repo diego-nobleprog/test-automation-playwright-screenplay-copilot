@@ -1,0 +1,166 @@
+ELIMINAR Y RECONSTRUIR EL AMBIENTE
+Curso: devtestautoai
+
+============================================================
+1. PREPARAR EL DIRECTORIO
+============================================================
+
+$REPO = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot"
+Set-Location $REPO
+
+============================================================
+2. ELIMINAR DOCKER COMPLETAMENTE
+============================================================
+
+docker compose down -v --rmi all --remove-orphans
+
+QUE HACE:
+
+down
+Detiene y elimina los contenedores del laboratorio.
+
+-v
+Elimina tambien los volumenes Docker del proyecto.
+
+Esto elimina:
+
+- postgres_data
+- frontend_node_modules
+- los datos actuales de PostgreSQL
+
+--rmi all
+Elimina tambien las imagenes utilizadas por los servicios.
+
+--remove-orphans
+Elimina contenedores sobrantes asociados al proyecto.
+
+RESULTADO:
+
+Se eliminan los contenedores, red, volumenes, datos
+e imagenes Docker del laboratorio.
+
+============================================================
+3. ELIMINAR DEPENDENCIAS LOCALES
+============================================================
+
+Remove-Item ($REPO + "\frontend\node_modules") -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item ($REPO + "\frontend\.angular") -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item ($REPO + "\frontend\dist") -Recurse -Force -ErrorAction SilentlyContinue
+
+Remove-Item ($REPO + "\test-automation\node_modules") -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item ($REPO + "\test-automation\test-results") -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item ($REPO + "\test-automation\playwright-report") -Recurse -Force -ErrorAction SilentlyContinue
+
+Remove-Item ($env:LOCALAPPDATA + "\ms-playwright") -Recurse -Force -ErrorAction SilentlyContinue
+
+QUE HACE:
+
+Elimina dependencias, caches, resultados anteriores
+y los navegadores descargados por Playwright.
+
+Los archivos versionados del repositorio no se eliminan.
+
+============================================================
+4. RECONSTRUIR PLAYWRIGHT
+============================================================
+
+Set-Location ($REPO + "\test-automation")
+
+npm.cmd ci
+
+npx.cmd playwright install chromium
+
+QUE HACE:
+
+npm.cmd ci
+
+Reconstruye node_modules utilizando package-lock.json.
+
+npx.cmd playwright install chromium
+
+Descarga nuevamente Chromium para Playwright.
+
+============================================================
+5. RECONSTRUIR DOCKER
+============================================================
+
+Set-Location $REPO
+
+docker compose pull
+docker compose up -d
+
+docker compose ps
+
+QUE HACE:
+
+docker compose pull
+docker compose up -d
+
+Descarga las imagenes que no existan y vuelve a crear:
+
+- frontend
+- backend
+- postgres
+- red Docker
+- postgres_data
+- frontend_node_modules
+
+El frontend ejecuta automaticamente npm ci antes de iniciar Angular.
+
+PostgreSQL vuelve a crear:
+
+Database: labdb
+Username: lab
+Password: lab
+
+============================================================
+6. VALIDAR
+============================================================
+
+curl.exe -I http://localhost:4200
+
+docker compose exec -T postgres psql -U lab -d labdb -c "SELECT current_database(), current_user;"
+
+Set-Location ($REPO + "\test-automation")
+
+npx.cmd playwright test practices/day-01/practice-03/first-ui-test.spec.ts
+
+RESULTADO ESPERADO:
+
+Frontend:
+
+HTTP/1.1 200 OK
+
+PostgreSQL:
+
+labdb | lab
+
+Playwright:
+
+1 passed
+
+============================================================
+RESUMEN
+============================================================
+
+ELIMINAR:
+
+Set-Location $REPO
+docker compose down -v --rmi all --remove-orphans
+
+RECONSTRUIR PLAYWRIGHT:
+
+Set-Location ($REPO + "\test-automation")
+npm.cmd ci
+npx.cmd playwright install chromium
+
+RECONSTRUIR DOCKER:
+
+Set-Location $REPO
+docker compose pull
+docker compose up -d
+docker compose ps
+
+============================================================
+FIN
+============================================================
