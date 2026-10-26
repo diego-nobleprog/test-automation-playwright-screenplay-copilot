@@ -1,0 +1,703 @@
+PRACTICA 6 - ESTRUCTURA Y APLICACION DE SCREENPLAY
+Curso: devtestautoai
+
+OBJETIVO
+
+Aprender a organizar una automatizacion Screenplay cuando
+empieza a crecer.
+
+En esta practica ambas versiones utilizan Screenplay.
+
+IMPORTANTE:
+
+BEFORE
+
+Todas las responsabilidades Screenplay viven en un solo archivo.
+
+AFTER
+
+Las mismas responsabilidades se separan por su proposito.
+
+No estamos migrando hacia Screenplay.
+
+Estamos aprendiendo a estructurarlo.
+
+============================================================
+1. PREPARAR EL DIRECTORIO
+============================================================
+
+$REPO = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot"
+$TEST_AUTOMATION = $REPO + "\test-automation"
+
+Set-Location $TEST_AUTOMATION
+
+============================================================
+2. REVISAR EL BEFORE
+============================================================
+
+Get-Content ($TEST_AUTOMATION + "\practices\day-02\practice-06\screenplay-structure-before-instructor.ts")
+
+El BEFORE ya utiliza:
+
+Actor
+
+Task
+
+Interaction
+
+Question
+
+Tambien contiene:
+
+Model
+
+State
+
+Scenario
+
+El problema no es que el codigo no funcione.
+
+El problema es que todas las responsabilidades viven
+en el mismo archivo.
+
+============================================================
+3. VALIDAR EL BEFORE
+============================================================
+
+npx.cmd tsc practices/day-02/practice-06/screenplay-structure-before-instructor.ts --noEmit --target ES2022 --module commonjs --moduleResolution node --esModuleInterop
+
+RESULTADO ESPERADO:
+
+El comando termina sin errores.
+
+============================================================
+4. EJECUTAR EL BEFORE
+============================================================
+
+Remove-Item ($TEST_AUTOMATION + "\temp") -Recurse -Force -ErrorAction SilentlyContinue
+
+New-Item -ItemType Directory -Force -Path ($TEST_AUTOMATION + "\temp\before") | Out-Null
+
+npx.cmd tsc practices/day-02/practice-06/screenplay-structure-before-instructor.ts --target ES2022 --module commonjs --moduleResolution node --esModuleInterop --outDir temp\before
+
+node .\temp\before\screenplay-structure-before-instructor.js
+
+RESULTADO ESPERADO:
+
+Tareas: [ { title: 'Preparar capacitacion', completed: false } ]
+
+Cantidad de tareas pendientes: 1
+
+============================================================
+5. IDENTIFICAR EL PROBLEMA
+============================================================
+
+El archivo funciona.
+
+Pero contiene al mismo tiempo:
+
+datos
+
+estado
+
+acciones
+
+intenciones
+
+consultas
+
+escenario
+
+Cuando la automatizacion crece, este tipo de archivo
+puede volverse dificil de:
+
+leer
+
+mantener
+
+reutilizar
+
+modificar
+
+probar
+
+Por eso necesitamos separar responsabilidades.
+
+============================================================
+6. IDENTIFICAR RESPONSABILIDADES
+============================================================
+
+TodoItem
+
+RESPONSABILIDAD:
+
+Model
+
+Representa datos.
+
+------------------------------------------------------------
+
+todoItems
+
+RESPONSABILIDAD:
+
+State
+
+Mantiene el estado utilizado por este ejercicio.
+
+------------------------------------------------------------
+
+AddTodoItem
+
+RESPONSABILIDAD:
+
+Interaction
+
+Representa una accion concreta.
+
+------------------------------------------------------------
+
+CreateTodo
+
+RESPONSABILIDAD:
+
+Task
+
+Representa una intencion.
+
+------------------------------------------------------------
+
+PendingTodoCount
+
+RESPONSABILIDAD:
+
+Question
+
+Consulta informacion.
+
+------------------------------------------------------------
+
+main()
+
+RESPONSABILIDAD:
+
+Scenario
+
+Cuenta la historia.
+
+============================================================
+7. REGLA MENTAL
+============================================================
+
+MODEL
+
+Que datos tengo?
+
+------------------------------------------------------------
+
+STATE
+
+Que estado necesita este ejercicio?
+
+------------------------------------------------------------
+
+INTERACTION
+
+Como se realiza una accion concreta?
+
+------------------------------------------------------------
+
+TASK
+
+Que quiere conseguir el Actor?
+
+------------------------------------------------------------
+
+QUESTION
+
+Que necesita conocer el Actor?
+
+------------------------------------------------------------
+
+SCENARIO
+
+Que historia estamos automatizando?
+
+============================================================
+8. REVISAR EL AFTER
+============================================================
+
+Get-ChildItem ($TEST_AUTOMATION + "\practices\day-02\practice-06\after") -Recurse
+
+La estructura contiene:
+
+after
+
+screenplay-structure-instructor.ts
+
+screenplay
+
+models
+
+TodoItem.ts
+
+state
+
+TodoList.ts
+
+interactions
+
+AddTodoItem.ts
+
+tasks
+
+CreateTodo.ts
+
+questions
+
+PendingTodoCount.ts
+
+============================================================
+9. MODEL
+============================================================
+
+Revisar:
+
+Get-Content ($TEST_AUTOMATION + "\practices\day-02\practice-06\after\screenplay\models\TodoItem.ts")
+
+TodoItem representa la estructura de una tarea.
+
+Su responsabilidad es representar datos.
+
+No ejecuta acciones.
+
+No representa intenciones.
+
+No consulta informacion.
+
+============================================================
+10. STATE
+============================================================
+
+Revisar:
+
+Get-Content ($TEST_AUTOMATION + "\practices\day-02\practice-06\after\screenplay\state\TodoList.ts")
+
+TodoList mantiene el estado necesario para este ejercicio.
+
+En este caso utilizamos memoria.
+
+Mas adelante un sistema real puede utilizar:
+
+UI
+
+API
+
+base de datos
+
+servicios externos
+
+El objetivo aqui es separar el estado del resto
+de responsabilidades.
+
+============================================================
+11. INTERACTION
+============================================================
+
+Revisar:
+
+Get-Content ($TEST_AUTOMATION + "\practices\day-02\practice-06\after\screenplay\interactions\AddTodoItem.ts")
+
+AddTodoItem contiene el detalle concreto necesario
+para agregar una tarea.
+
+RESPONDE A:
+
+COMO se realiza la accion?
+
+La Interaction conoce el detalle tecnico.
+
+============================================================
+12. TASK
+============================================================
+
+Revisar:
+
+Get-Content ($TEST_AUTOMATION + "\practices\day-02\practice-06\after\screenplay\tasks\CreateTodo.ts")
+
+CreateTodo representa la intencion:
+
+crear una tarea
+
+RESPONDE A:
+
+QUE quiere conseguir el Actor?
+
+La Task no necesita implementar directamente
+el cambio de estado.
+
+Delega ese detalle a:
+
+AddTodoItem
+
+============================================================
+13. QUESTION
+============================================================
+
+Revisar:
+
+Get-Content ($TEST_AUTOMATION + "\practices\day-02\practice-06\after\screenplay\questions\PendingTodoCount.ts")
+
+PendingTodoCount consulta:
+
+cantidad de tareas pendientes
+
+RESPONDE A:
+
+QUE necesita conocer el Actor?
+
+La Question consulta informacion.
+
+No modifica el sistema.
+
+============================================================
+14. SCENARIO
+============================================================
+
+Revisar:
+
+Get-Content ($TEST_AUTOMATION + "\practices\day-02\practice-06\after\screenplay-structure-instructor.ts")
+
+El archivo principal ahora se concentra en:
+
+crear el Actor
+
+ejecutar una Task
+
+consultar una Question
+
+mostrar el resultado
+
+El escenario ya no necesita conocer todos
+los detalles internos.
+
+============================================================
+15. IMPORT Y EXPORT
+============================================================
+
+Cuando las responsabilidades se separan en archivos
+necesitamos compartirlas.
+
+export
+
+permite exponer una responsabilidad.
+
+Ejemplo:
+
+export const CreateTodo
+
+------------------------------------------------------------
+
+import
+
+permite utilizar una responsabilidad desde otro archivo.
+
+Ejemplo:
+
+import { CreateTodo } from './screenplay/tasks/CreateTodo';
+
+============================================================
+16. MAPEO BEFORE A AFTER
+============================================================
+
+BEFORE
+
+Un solo archivo contiene:
+
+Model
+State
+Interaction
+Task
+Question
+Scenario
+
+------------------------------------------------------------
+
+AFTER
+
+Cada responsabilidad tiene una ubicacion especifica:
+
+models
+
+state
+
+interactions
+
+tasks
+
+questions
+
+scenario principal
+
+============================================================
+17. QUE CAMBIO
+============================================================
+
+Cambio:
+
+estructura
+
+ubicacion del codigo
+
+separacion de responsabilidades
+
+imports
+
+exports
+
+============================================================
+18. QUE NO CAMBIO
+============================================================
+
+No cambio:
+
+Actor
+
+Task
+
+Interaction
+
+Question
+
+comportamiento
+
+datos
+
+resultado
+
+La automatizacion sigue haciendo exactamente lo mismo.
+
+============================================================
+19. VALIDAR EL AFTER
+============================================================
+
+npx.cmd tsc practices/day-02/practice-06/after/screenplay-structure-instructor.ts --noEmit --target ES2022 --module commonjs --moduleResolution node --esModuleInterop
+
+RESULTADO ESPERADO:
+
+El comando termina sin errores.
+
+============================================================
+20. EJECUTAR EL AFTER
+============================================================
+
+Remove-Item ($TEST_AUTOMATION + "\temp\after") -Recurse -Force -ErrorAction SilentlyContinue
+
+New-Item -ItemType Directory -Force -Path ($TEST_AUTOMATION + "\temp\after") | Out-Null
+
+npx.cmd tsc practices/day-02/practice-06/after/screenplay-structure-instructor.ts --target ES2022 --module commonjs --moduleResolution node --esModuleInterop --outDir temp\after
+
+node .\temp\after\screenplay-structure-instructor.js
+
+RESULTADO ESPERADO:
+
+Tareas: [ { title: 'Preparar capacitacion', completed: false } ]
+
+Cantidad de tareas pendientes: 1
+
+============================================================
+21. COMPARAR RESULTADOS
+============================================================
+
+BEFORE:
+
+Tareas: [ { title: 'Preparar capacitacion', completed: false } ]
+
+Cantidad de tareas pendientes: 1
+
+------------------------------------------------------------
+
+AFTER:
+
+Tareas: [ { title: 'Preparar capacitacion', completed: false } ]
+
+Cantidad de tareas pendientes: 1
+
+El comportamiento no cambio.
+
+El refactor fue estructural.
+
+============================================================
+22. PRINCIPIO IMPORTANTE
+============================================================
+
+Screenplay no consiste solamente en utilizar:
+
+Actor
+
+Task
+
+Interaction
+
+Question
+
+Tambien implica organizar el codigo alrededor
+de responsabilidades claras.
+
+La estructura debe ayudar a responder:
+
+Donde esta una intencion?
+
+tasks
+
+Donde esta una accion concreta?
+
+interactions
+
+Donde esta una consulta?
+
+questions
+
+Donde estan los datos?
+
+models
+
+============================================================
+23. COMO DECIDIR DONDE COLOCAR CODIGO
+============================================================
+
+Es una estructura de datos?
+
+models
+
+------------------------------------------------------------
+
+Mantiene estado de soporte?
+
+state
+
+------------------------------------------------------------
+
+Realiza una accion concreta?
+
+interactions
+
+------------------------------------------------------------
+
+Representa una intencion?
+
+tasks
+
+------------------------------------------------------------
+
+Consulta informacion?
+
+questions
+
+------------------------------------------------------------
+
+Cuenta la historia?
+
+scenario principal
+
+============================================================
+24. ERROR A EVITAR
+============================================================
+
+Separar codigo no significa crear carpetas
+sin una razon.
+
+No buscamos:
+
+mas archivos
+
+mas directorios
+
+mas complejidad
+
+Buscamos:
+
+responsabilidades claras
+
+codigo reutilizable
+
+escenarios legibles
+
+detalles tecnicos aislados
+
+============================================================
+25. FLUJO FINAL
+============================================================
+
+Scenario
+
+v
+
+Task
+
+v
+
+Interaction
+
+v
+
+System State
+
+v
+
+Question
+
+v
+
+Result
+
+============================================================
+26. RESULTADO DE LA PRACTICA
+============================================================
+
+ANTES:
+
+Screenplay funcional pero monolitico.
+
+DESPUES:
+
+Screenplay funcional y estructurado.
+
+Mismo comportamiento.
+
+Mismo resultado.
+
+Mejor separacion de responsabilidades.
+
+============================================================
+27. ALCANCE
+============================================================
+
+Todavia no utilizamos:
+
+Playwright UI
+
+localizadores
+
+Click
+
+Enter
+
+Navigate
+
+API
+
+El objetivo es aprender primero a estructurar
+Screenplay correctamente.
+
+============================================================
+28. LIMPIAR TEMP
+============================================================
+
+Set-Location $TEST_AUTOMATION
+
+Remove-Item ($TEST_AUTOMATION + "\temp") -Recurse -Force -ErrorAction SilentlyContinue
+
+============================================================
+FIN DE LA PRACTICA 6
+============================================================
