@@ -113,11 +113,11 @@ El flujo es:
 
 Actor
 
-Ã¢â€ â€œ
+v
 
 Task
 
-Ã¢â€ â€œ
+v
 
 Interaction
 
@@ -231,23 +231,23 @@ El flujo construido durante la practica es:
 
 Actor
 
-Ã¢â€ â€œ
+v
 
 Task
 
-Ã¢â€ â€œ
+v
 
 Interaction
 
-Ã¢â€ â€œ
+v
 
 Sistema
 
-Ã¢â€ â€œ
+v
 
 Question
 
-Ã¢â€ â€œ
+v
 
 Resultado
 
