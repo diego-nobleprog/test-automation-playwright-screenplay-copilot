@@ -3,21 +3,34 @@ Curso: devtestautoai
 
 OBJETIVO
 
-Comprender los componentes fundamentales del patron Screenplay
-utilizando Serenity/JS.
+Comprender por que existe el patron Screenplay y aprender
+a transformar una solucion tradicional en una solucion
+basada en Screenplay utilizando Serenity/JS.
 
-Durante la practica se construira un pequeno escenario en memoria
-para identificar claramente las responsabilidades de:
+Durante esta practica resolveremos exactamente el mismo
+problema de dos formas:
 
-Actor
+BEFORE
 
-Task
+TypeScript tradicional.
 
-Interaction
+AFTER
 
-Question
+Screenplay con Serenity/JS.
 
-attemptsTo
+El objetivo no es demostrar que el codigo tradicional
+esta mal.
+
+El objetivo es observar como Screenplay permite expresar
+mejor:
+
+quien realiza una accion
+
+que quiere conseguir
+
+como se realiza
+
+que informacion necesita conocer
 
 ============================================================
 1. PREPARAR EL DIRECTORIO
@@ -29,137 +42,475 @@ $TEST_AUTOMATION = $REPO + "\test-automation"
 Set-Location $TEST_AUTOMATION
 
 ============================================================
-2. REVISAR EL ARCHIVO DE LA PRACTICA
+2. ESCENARIO
 ============================================================
 
-Get-Content ($TEST_AUTOMATION + "\practices\day-02\practice-05\screenplay-fundamentals-instructor.ts")
+Resolveremos el siguiente comportamiento:
+
+Crear una tarea.
+
+Consultar cuantas tareas pendientes existen.
+
+Mostrar el resultado.
+
+Los datos se mantendran en memoria.
+
+Todavia no utilizaremos navegador ni Playwright UI.
 
 ============================================================
-3. IDENTIFICAR EL ACTOR
+3. BEFORE - SOLUCION TRADICIONAL
 ============================================================
 
-El Actor representa a la persona o sistema que interactua
-con el sistema bajo prueba.
+Revisar el archivo:
 
-En este ejercicio se crea:
+Get-Content ($TEST_AUTOMATION + "\practices\day-02\practice-05\screenplay-before-instructor.ts")
+
+La solucion utiliza funciones tradicionales.
+
+La funcion:
+
+addTodoItem()
+
+modifica directamente la lista de tareas.
+
+La funcion:
+
+pendingTodoCount()
+
+consulta directamente la cantidad de tareas pendientes.
+
+Finalmente se ejecuta:
+
+addTodoItem('Preparar capacitacion');
+
+y despues:
+
+const pendingCount = pendingTodoCount();
+
+============================================================
+4. VALIDAR EL BEFORE
+============================================================
+
+Set-Location $TEST_AUTOMATION
+
+npx.cmd tsc practices/day-02/practice-05/screenplay-before-instructor.ts --noEmit --target ES2022 --module commonjs --moduleResolution node
+
+RESULTADO ESPERADO:
+
+El comando termina sin errores.
+
+============================================================
+5. COMPILAR Y EJECUTAR EL BEFORE
+============================================================
+
+Set-Location $TEST_AUTOMATION
+
+Remove-Item ($TEST_AUTOMATION + "\temp") -Recurse -Force -ErrorAction SilentlyContinue
+
+New-Item -ItemType Directory -Force -Path ($TEST_AUTOMATION + "\temp") | Out-Null
+
+npx.cmd tsc practices/day-02/practice-05/screenplay-before-instructor.ts --target ES2022 --module commonjs --moduleResolution node --outDir temp
+
+node .\temp\screenplay-before-instructor.js
+
+RESULTADO ESPERADO:
+
+Tareas: [ { title: 'Preparar capacitacion', completed: false } ]
+
+Cantidad de tareas pendientes: 1
+
+============================================================
+6. ANALIZAR EL BEFORE
+============================================================
+
+La solucion funciona.
+
+No hay un problema tecnico con ella.
+
+Sin embargo, analicemos como expresa el comportamiento.
+
+PREGUNTA:
+
+Quien realiza la accion?
+
+RESPUESTA:
+
+No existe una representacion explicita.
+
+------------------------------------------------------------
+
+PREGUNTA:
+
+Que quiere conseguir?
+
+RESPUESTA:
+
+La intencion esta implicita en las funciones.
+
+------------------------------------------------------------
+
+PREGUNTA:
+
+Como se modifica concretamente el sistema?
+
+RESPUESTA:
+
+addTodoItem()
+
+------------------------------------------------------------
+
+PREGUNTA:
+
+Como se consulta el sistema?
+
+RESPUESTA:
+
+pendingTodoCount()
+
+------------------------------------------------------------
+
+PREGUNTA:
+
+Quien realiza la consulta?
+
+RESPUESTA:
+
+No existe una representacion explicita.
+
+============================================================
+7. EL PROBLEMA QUE SCREENPLAY INTENTA RESOLVER
+============================================================
+
+Cuando una automatizacion crece podemos terminar con muchas:
+
+funciones
+
+acciones
+
+consultas
+
+localizadores
+
+datos
+
+validaciones
+
+Screenplay propone organizar ese comportamiento alrededor
+de un Actor y separar responsabilidades.
+
+La pregunta deja de ser solamente:
+
+Que funcion debo ejecutar?
+
+Y comienza a ser:
+
+Quien realiza el comportamiento?
+
+Que quiere conseguir?
+
+Como realiza la accion?
+
+Que necesita conocer?
+
+============================================================
+8. MANUAL MENTAL - PASO 1
+============================================================
+
+DESCRIBIR EL COMPORTAMIENTO EN LENGUAJE HUMANO.
+
+Nuestro escenario puede expresarse como:
+
+Diego quiere crear una tarea.
+
+Despues quiere conocer cuantas tareas pendientes existen.
+
+Todavia no pensamos en clases ni APIs de Serenity/JS.
+
+Primero pensamos en comportamiento.
+
+============================================================
+9. MANUAL MENTAL - PASO 2
+============================================================
+
+PREGUNTAR:
+
+QUIEN realiza el comportamiento?
+
+RESPUESTA:
+
+Diego.
+
+En Screenplay esto se representa mediante un:
+
+Actor
+
+Codigo:
 
 const diego = actorCalled('Diego');
 
-El Actor sera quien ejecute las actividades del escenario.
+REGLA MENTAL:
+
+WHO?
+
+Actor
 
 ============================================================
-4. IDENTIFICAR LA INTERACTION
+10. MANUAL MENTAL - PASO 3
+============================================================
+
+PREGUNTAR:
+
+QUE quiere conseguir el Actor?
+
+RESPUESTA:
+
+Crear una tarea.
+
+Esto representa una intencion.
+
+En Screenplay una intencion se modela normalmente mediante:
+
+Task
+
+En nuestra solucion:
+
+CreateTodo
+
+REGLA MENTAL:
+
+WHAT?
+
+Task
+
+============================================================
+11. MANUAL MENTAL - PASO 4
+============================================================
+
+PREGUNTAR:
+
+COMO se realiza concretamente esa intencion?
+
+RESPUESTA:
+
+Agregar un elemento a la lista.
+
+Esta es una accion concreta sobre el sistema.
+
+En Screenplay se representa mediante:
+
+Interaction
+
+En nuestra solucion:
+
+AddTodoItem
+
+REGLA MENTAL:
+
+HOW?
+
+Interaction
+
+============================================================
+12. MANUAL MENTAL - PASO 5
+============================================================
+
+PREGUNTAR:
+
+QUE informacion necesita conocer el Actor?
+
+RESPUESTA:
+
+La cantidad de tareas pendientes.
+
+Una consulta que no modifica el sistema se representa mediante:
+
+Question
+
+En nuestra solucion:
+
+PendingTodoCount
+
+REGLA MENTAL:
+
+WHAT DOES THE ACTOR NEED TO KNOW?
+
+Question
+
+============================================================
+13. MAPEO BEFORE A AFTER
+============================================================
+
+ANTES:
+
+Usuario implicito
+
+DESPUES:
+
+Actor
+
+------------------------------------------------------------
+
+ANTES:
+
+Llamada directa para representar la intencion.
+
+DESPUES:
+
+Task
+
+------------------------------------------------------------
+
+ANTES:
+
+addTodoItem()
+
+DESPUES:
+
+Interaction AddTodoItem
+
+------------------------------------------------------------
+
+ANTES:
+
+pendingTodoCount()
+
+DESPUES:
+
+Question PendingTodoCount
+
+------------------------------------------------------------
+
+ANTES:
+
+Llamadas directas a funciones.
+
+DESPUES:
+
+actor.attemptsTo(...)
+
+y:
+
+actor.answer(...)
+
+============================================================
+14. AFTER - SOLUCION SCREENPLAY
+============================================================
+
+Revisar el archivo:
+
+Get-Content ($TEST_AUTOMATION + "\practices\day-02\practice-05\screenplay-fundamentals-instructor.ts")
+
+Ahora encontramos cuatro conceptos principales:
+
+Actor
+
+Task
+
+Interaction
+
+Question
+
+============================================================
+15. ACTOR
+============================================================
+
+El Actor representa quien realiza el comportamiento.
+
+Codigo:
+
+const diego = actorCalled('Diego');
+
+En lugar de tener un usuario implicito ahora tenemos
+un participante explicito en el escenario.
+
+============================================================
+16. TASK
+============================================================
+
+La Task representa una intencion.
+
+En nuestro escenario:
+
+CreateTodo
+
+representa:
+
+crear una tarea
+
+La Task debe decir QUE quiere conseguir el Actor.
+
+No debe concentrarse primero en detalles tecnicos.
+
+============================================================
+17. INTERACTION
 ============================================================
 
 La Interaction representa una accion concreta.
 
-En esta practica utilizamos:
+En nuestro escenario:
 
 AddTodoItem
 
-Su responsabilidad es modificar directamente la lista de tareas.
+es responsable de modificar realmente la lista.
 
-La Interaction realiza:
+La Interaction responde a:
 
-todoItems.push(...)
-
-Esto representa la accion concreta sobre el sistema.
+COMO se realiza la accion?
 
 ============================================================
-5. IDENTIFICAR LA TASK
+18. QUESTION
 ============================================================
 
-La Task representa una intencion de negocio.
+La Question representa informacion que el Actor
+necesita conocer.
 
-En esta practica utilizamos:
+En nuestro escenario:
 
-CreateTodo
+PendingTodoCount
 
-Su responsabilidad es expresar:
+consulta la cantidad de tareas pendientes.
 
-"crear una tarea"
+Una Question consulta.
 
-La Task no modifica directamente los datos.
-
-En su lugar utiliza:
-
-AddTodoItem(title)
-
-De esta manera:
-
-Task
-
-representa la intencion.
-
-Interaction
-
-representa la accion concreta.
+No modifica el sistema.
 
 ============================================================
-6. EL ACTOR EJECUTA LA TASK
+19. ATTEMPTSTO
 ============================================================
 
-El Actor ejecuta actividades mediante:
+El Actor ejecuta comportamiento utilizando:
 
 attemptsTo()
 
-Ejemplo:
+Codigo:
 
 await diego.attemptsTo(
   CreateTodo('Preparar capacitacion'),
 );
 
-El flujo es:
+Esto permite que el codigo pueda leerse como:
 
-Actor
-
-v
-
-Task
-
-v
-
-Interaction
+Diego intenta crear una tarea.
 
 ============================================================
-7. IDENTIFICAR LA QUESTION
+20. ANSWER
 ============================================================
 
-Una Question permite consultar informacion sobre el estado
-del sistema.
-
-En esta practica utilizamos:
-
-PendingTodoCount()
-
-La Question filtra las tareas pendientes y devuelve:
-
-pendingItems.length
-
-La Question no modifica el estado.
-
-Solamente consulta informacion.
-
-============================================================
-8. EL ACTOR RESPONDE LA QUESTION
-============================================================
-
-El Actor puede responder Questions utilizando:
+El Actor consulta informacion utilizando:
 
 answer()
 
-Ejemplo:
+Codigo:
 
 const pendingCount = await diego.answer(
   PendingTodoCount(),
 );
 
-El resultado se almacena en:
-
-pendingCount
+Esto expresa que el Actor obtiene una respuesta
+sobre el estado del sistema.
 
 ============================================================
-9. VALIDAR TYPESCRIPT
+21. VALIDAR EL AFTER
 ============================================================
 
 Set-Location $TEST_AUTOMATION
@@ -168,66 +519,169 @@ npx.cmd tsc practices/day-02/practice-05/screenplay-fundamentals-instructor.ts -
 
 RESULTADO ESPERADO:
 
-El comando termina sin errores de TypeScript.
-
-El parametro:
-
---esModuleInterop
-
-permite la interoperabilidad entre modulos CommonJS
-y los imports utilizados por las dependencias de Serenity/JS.
+El comando termina sin errores.
 
 ============================================================
-10. COMPILAR EL EJERCICIO
-============================================================
-
-Set-Location $TEST_AUTOMATION
-
-New-Item -ItemType Directory -Force -Path ($TEST_AUTOMATION + "\temp") | Out-Null
-
-npx.cmd tsc practices/day-02/practice-05/screenplay-fundamentals-instructor.ts --target ES2022 --module commonjs --moduleResolution node --esModuleInterop --outDir temp
-
-RESULTADO ESPERADO:
-
-Se genera:
-
-temp\screenplay-fundamentals-instructor.js
-
-============================================================
-11. EJECUTAR EL EJERCICIO
-============================================================
-
-Set-Location $TEST_AUTOMATION
-
-node .\temp\screenplay-fundamentals-instructor.js
-
-RESULTADO ESPERADO:
-
-Se muestra una tarea:
-
-Preparar capacitacion
-
-con:
-
-completed: false
-
-Tambien se muestra:
-
-Cantidad de tareas pendientes: 1
-
-============================================================
-12. LIMPIAR ARCHIVOS TEMPORALES
+22. COMPILAR Y EJECUTAR EL AFTER
 ============================================================
 
 Set-Location $TEST_AUTOMATION
 
 Remove-Item ($TEST_AUTOMATION + "\temp") -Recurse -Force -ErrorAction SilentlyContinue
 
+New-Item -ItemType Directory -Force -Path ($TEST_AUTOMATION + "\temp") | Out-Null
+
+npx.cmd tsc practices/day-02/practice-05/screenplay-fundamentals-instructor.ts --target ES2022 --module commonjs --moduleResolution node --esModuleInterop --outDir temp
+
+node .\temp\screenplay-fundamentals-instructor.js
+
+RESULTADO ESPERADO:
+
+Tareas: [ { title: 'Preparar capacitacion', completed: false } ]
+
+Cantidad de tareas pendientes: 1
+
 ============================================================
-13. FLUJO SCREENPLAY
+23. COMPARACION DIRECTA
 ============================================================
 
-El flujo construido durante la practica es:
+BEFORE:
+
+addTodoItem('Preparar capacitacion');
+
+const pendingCount = pendingTodoCount();
+
+------------------------------------------------------------
+
+AFTER:
+
+await diego.attemptsTo(
+  CreateTodo('Preparar capacitacion'),
+);
+
+const pendingCount = await diego.answer(
+  PendingTodoCount(),
+);
+
+Ambas soluciones producen el mismo resultado.
+
+La diferencia se encuentra en como se expresa
+y organiza el comportamiento.
+
+============================================================
+24. COMO PENSAR SCREENPLAY
+============================================================
+
+No comenzar pensando:
+
+Necesito un Actor.
+
+Necesito una Task.
+
+Necesito una Interaction.
+
+Necesito una Question.
+
+Comenzar pensando:
+
+Que comportamiento quiero automatizar?
+
+Despues preguntar:
+
+WHO?
+
+Actor
+
+WHAT?
+
+Task
+
+HOW?
+
+Interaction
+
+WHAT DOES THE ACTOR NEED TO KNOW?
+
+Question
+
+============================================================
+25. REGLA RAPIDA
+============================================================
+
+SCREENPLAY
+
+WHO?
+Actor
+
+WHAT?
+Task
+
+HOW?
+Interaction
+
+WHAT KNOW?
+Question
+
+============================================================
+26. IMPORTANTE - NO TODO ES UNA TASK
+============================================================
+
+Task:
+
+Representa una intencion o actividad de negocio.
+
+Ejemplo:
+
+Crear una tarea.
+
+------------------------------------------------------------
+
+Interaction:
+
+Representa una accion concreta.
+
+Ejemplo:
+
+Agregar un elemento a una lista.
+
+Posteriormente podria representar:
+
+hacer click
+
+escribir texto
+
+navegar
+
+------------------------------------------------------------
+
+Question:
+
+Representa una consulta.
+
+Ejemplo:
+
+Cuantas tareas pendientes existen?
+
+============================================================
+27. BENEFICIO PRINCIPAL
+============================================================
+
+Screenplay ayuda a separar:
+
+quien actua
+
+que quiere conseguir
+
+como se realiza la accion
+
+que informacion se consulta
+
+Esto permite que los escenarios puedan expresar
+mejor el comportamiento que se esta automatizando.
+
+============================================================
+28. FLUJO FINAL
+============================================================
 
 Actor
 
@@ -252,30 +706,11 @@ v
 Resultado
 
 ============================================================
-14. RESPONSABILIDADES
+29. ALCANCE DE ESTA PRACTICA
 ============================================================
 
-Actor
-
-Representa quien realiza las acciones.
-
-Task
-
-Representa una intencion de negocio.
-
-Interaction
-
-Representa una accion concreta sobre el sistema.
-
-Question
-
-Consulta informacion del sistema sin modificarlo.
-
-============================================================
-15. ALCANCE
-============================================================
-
-En esta practica utilizamos Screenplay sin navegador.
+En esta practica utilizamos Screenplay solamente
+con datos en memoria.
 
 Todavia no utilizamos:
 
@@ -295,8 +730,16 @@ expect
 
 API
 
-El objetivo es comprender primero las responsabilidades
-fundamentales del patron Screenplay.
+El siguiente paso sera aplicar esta misma forma
+de pensar sobre una automatizacion real.
+
+============================================================
+30. LIMPIAR TEMP
+============================================================
+
+Set-Location $TEST_AUTOMATION
+
+Remove-Item ($TEST_AUTOMATION + "\temp") -Recurse -Force -ErrorAction SilentlyContinue
 
 ============================================================
 FIN DE LA PRACTICA 5
