@@ -1,0 +1,303 @@
+PRACTICA 5 - FUNDAMENTOS DE SCREENPLAY
+Curso: devtestautoai
+
+OBJETIVO
+
+Comprender los componentes fundamentales del patron Screenplay
+utilizando Serenity/JS.
+
+Durante la practica se construira un pequeno escenario en memoria
+para identificar claramente las responsabilidades de:
+
+Actor
+
+Task
+
+Interaction
+
+Question
+
+attemptsTo
+
+============================================================
+1. PREPARAR EL DIRECTORIO
+============================================================
+
+$REPO = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot"
+$TEST_AUTOMATION = $REPO + "\test-automation"
+
+Set-Location $TEST_AUTOMATION
+
+============================================================
+2. REVISAR EL ARCHIVO DE LA PRACTICA
+============================================================
+
+Get-Content ($TEST_AUTOMATION + "\practices\day-02\practice-05\screenplay-fundamentals-instructor.ts")
+
+============================================================
+3. IDENTIFICAR EL ACTOR
+============================================================
+
+El Actor representa a la persona o sistema que interactua
+con el sistema bajo prueba.
+
+En este ejercicio se crea:
+
+const diego = actorCalled('Diego');
+
+El Actor sera quien ejecute las actividades del escenario.
+
+============================================================
+4. IDENTIFICAR LA INTERACTION
+============================================================
+
+La Interaction representa una accion concreta.
+
+En esta practica utilizamos:
+
+AddTodoItem
+
+Su responsabilidad es modificar directamente la lista de tareas.
+
+La Interaction realiza:
+
+todoItems.push(...)
+
+Esto representa la accion concreta sobre el sistema.
+
+============================================================
+5. IDENTIFICAR LA TASK
+============================================================
+
+La Task representa una intencion de negocio.
+
+En esta practica utilizamos:
+
+CreateTodo
+
+Su responsabilidad es expresar:
+
+"crear una tarea"
+
+La Task no modifica directamente los datos.
+
+En su lugar utiliza:
+
+AddTodoItem(title)
+
+De esta manera:
+
+Task
+
+representa la intencion.
+
+Interaction
+
+representa la accion concreta.
+
+============================================================
+6. EL ACTOR EJECUTA LA TASK
+============================================================
+
+El Actor ejecuta actividades mediante:
+
+attemptsTo()
+
+Ejemplo:
+
+await diego.attemptsTo(
+  CreateTodo('Preparar capacitacion'),
+);
+
+El flujo es:
+
+Actor
+
+Ã¢â€ â€œ
+
+Task
+
+Ã¢â€ â€œ
+
+Interaction
+
+============================================================
+7. IDENTIFICAR LA QUESTION
+============================================================
+
+Una Question permite consultar informacion sobre el estado
+del sistema.
+
+En esta practica utilizamos:
+
+PendingTodoCount()
+
+La Question filtra las tareas pendientes y devuelve:
+
+pendingItems.length
+
+La Question no modifica el estado.
+
+Solamente consulta informacion.
+
+============================================================
+8. EL ACTOR RESPONDE LA QUESTION
+============================================================
+
+El Actor puede responder Questions utilizando:
+
+answer()
+
+Ejemplo:
+
+const pendingCount = await diego.answer(
+  PendingTodoCount(),
+);
+
+El resultado se almacena en:
+
+pendingCount
+
+============================================================
+9. VALIDAR TYPESCRIPT
+============================================================
+
+Set-Location $TEST_AUTOMATION
+
+npx.cmd tsc practices/day-02/practice-05/screenplay-fundamentals-instructor.ts --noEmit --target ES2022 --module commonjs --moduleResolution node --esModuleInterop
+
+RESULTADO ESPERADO:
+
+El comando termina sin errores de TypeScript.
+
+El parametro:
+
+--esModuleInterop
+
+permite la interoperabilidad entre modulos CommonJS
+y los imports utilizados por las dependencias de Serenity/JS.
+
+============================================================
+10. COMPILAR EL EJERCICIO
+============================================================
+
+Set-Location $TEST_AUTOMATION
+
+New-Item -ItemType Directory -Force -Path ($TEST_AUTOMATION + "\temp") | Out-Null
+
+npx.cmd tsc practices/day-02/practice-05/screenplay-fundamentals-instructor.ts --target ES2022 --module commonjs --moduleResolution node --esModuleInterop --outDir temp
+
+RESULTADO ESPERADO:
+
+Se genera:
+
+temp\screenplay-fundamentals-instructor.js
+
+============================================================
+11. EJECUTAR EL EJERCICIO
+============================================================
+
+Set-Location $TEST_AUTOMATION
+
+node .\temp\screenplay-fundamentals-instructor.js
+
+RESULTADO ESPERADO:
+
+Se muestra una tarea:
+
+Preparar capacitacion
+
+con:
+
+completed: false
+
+Tambien se muestra:
+
+Cantidad de tareas pendientes: 1
+
+============================================================
+12. LIMPIAR ARCHIVOS TEMPORALES
+============================================================
+
+Set-Location $TEST_AUTOMATION
+
+Remove-Item ($TEST_AUTOMATION + "\temp") -Recurse -Force -ErrorAction SilentlyContinue
+
+============================================================
+13. FLUJO SCREENPLAY
+============================================================
+
+El flujo construido durante la practica es:
+
+Actor
+
+Ã¢â€ â€œ
+
+Task
+
+Ã¢â€ â€œ
+
+Interaction
+
+Ã¢â€ â€œ
+
+Sistema
+
+Ã¢â€ â€œ
+
+Question
+
+Ã¢â€ â€œ
+
+Resultado
+
+============================================================
+14. RESPONSABILIDADES
+============================================================
+
+Actor
+
+Representa quien realiza las acciones.
+
+Task
+
+Representa una intencion de negocio.
+
+Interaction
+
+Representa una accion concreta sobre el sistema.
+
+Question
+
+Consulta informacion del sistema sin modificarlo.
+
+============================================================
+15. ALCANCE
+============================================================
+
+En esta practica utilizamos Screenplay sin navegador.
+
+Todavia no utilizamos:
+
+Playwright UI
+
+Page
+
+localizadores
+
+Click
+
+Enter
+
+Navigate
+
+expect
+
+API
+
+El objetivo es comprender primero las responsabilidades
+fundamentales del patron Screenplay.
+
+============================================================
+FIN DE LA PRACTICA 5
+============================================================
