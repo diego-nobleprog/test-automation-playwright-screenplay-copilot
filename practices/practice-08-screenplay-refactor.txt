@@ -360,6 +360,43 @@ Resultado esperado:
 1 passed
 
 
+-- Playwright Inspector
+
+$REPO = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot"
+$TEST_AUTOMATION = $REPO + "\test-automation"
+
+Set-Location $TEST_AUTOMATION
+npx.cmd playwright test "practices/day-03/practice-08/after/api-ui-screenplay-instructor.spec.ts" --debug
+
+Esto te abre:
+
+- navegador;
+- Playwright Inspector;
+- ejecución paso a paso;
+- acciones del Actor;
+- navegación;
+- click;
+- source;
+- logs.
+
+Y en P8 tiene incluso más valor pedagógico, porque deberías empezar a ver actividades con nombres como:
+
+Serena creates "..." via API
+Serena completes "..." through the UI
+Serena verifies todo ... via API
+Serena deletes todo ... via API
+
+
+
+-- Playwright UI Mode
+$REPO = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot"
+$TEST_AUTOMATION = $REPO + "\test-automation"
+
+Set-Location $TEST_AUTOMATION
+npx.cmd playwright test "practices/day-03/practice-08/after/api-ui-screenplay-instructor.spec.ts" --ui
+
+
+
 ============================================================
 PASO 12 - VALIDAR EL CLEANUP
 ============================================================
