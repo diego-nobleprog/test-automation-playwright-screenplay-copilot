@@ -1,0 +1,127 @@
+PRACTICA 07 - INTEGRACION API + UI CON PLAYWRIGHT
+
+OBJETIVO
+
+Construir una prueba que combine llamadas HTTP y acciones de interfaz.
+
+El flujo sera:
+
+1. Crear una tarea por API.
+2. Abrir la aplicacion en el navegador.
+3. Verificar que la tarea creada por API aparece en la UI.
+4. Completar la tarea desde la UI.
+5. Consultar la tarea por API.
+6. Verificar que completed sea true.
+7. Eliminar la tarea por API como cleanup.
+
+CONCEPTOS
+
+- Fixture request de Playwright.
+- request.post().
+- request.get().
+- request.delete().
+- Validacion de status HTTP.
+- Lectura de respuestas JSON.
+- Preparacion de datos mediante API.
+- Accion del usuario mediante UI.
+- Verificacion final mediante API.
+- Cleanup con try/finally.
+
+NO SE UTILIZARA EN ESTA PRACTICA
+
+- Screenplay Pattern.
+- Page Object Model.
+- Acceso directo a PostgreSQL desde la prueba.
+- Mocks.
+- GitHub Copilot.
+
+PREPARACION
+
+Desde la raiz del repositorio:
+
+$REPO = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot"
+Set-Location $REPO
+
+docker compose up -d
+docker compose ps
+
+La aplicacion debe estar disponible en:
+
+Frontend: http://localhost:4200
+API:      http://localhost:8080/api/tasks
+
+EJERCICIO
+
+Crea un archivo Playwright llamado:
+
+api-ui-integration.spec.ts
+
+La prueba debe recibir los fixtures page y request.
+
+PASO 1
+Genera un titulo unico para la tarea.
+Puedes utilizar Date.now().
+
+PASO 2
+Usa request.post() para crear la tarea en:
+http://localhost:8080/api/tasks
+
+El body debe contener el titulo.
+
+Verifica que el status HTTP sea 201.
+
+PASO 3
+Lee el JSON de la respuesta.
+
+Guarda el id de la tarea creada.
+Verifica que:
+
+- title sea el esperado.
+- completed sea false.
+
+PASO 4
+Abre http://localhost:4200.
+
+Localiza en la UI la tarea creada por API.
+Verifica que sea visible y que su data-status sea pending.
+
+PASO 5
+Completa la tarea mediante su checkbox.
+
+Verifica en la UI que data-status cambie a completed.
+
+PASO 6
+Usa request.get() para consultar:
+
+http://localhost:8080/api/tasks/{id}
+
+Verifica:
+
+- status 200.
+- id correcto.
+- title correcto.
+- completed igual a true.
+
+PASO 7
+Implementa cleanup mediante try/finally.
+
+Si la tarea fue creada, utiliza request.delete() para eliminarla aunque una validacion falle.
+
+EJECUCION
+
+$AUTOMATION = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot\test-automation"
+Set-Location $AUTOMATION
+
+npx.cmd playwright test "<ruta-del-spec>" --reporter=line
+
+RESULTADO ESPERADO
+
+La prueba debe terminar correctamente y mostrar:
+
+1 passed
+
+IDEA CLAVE
+
+No todo el flujo de una prueba necesita ejecutarse por la interfaz.
+La API puede preparar datos y verificar estado de forma rapida.
+La UI se reserva para el comportamiento que realmente queremos validar desde la perspectiva del usuario.
