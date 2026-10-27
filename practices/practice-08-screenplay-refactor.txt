@@ -1,0 +1,430 @@
+PRACTICA 08 - REFACTOR DE PLAYWRIGHT A SCREENPLAY
+=================================================
+
+OBJETIVO
+--------
+
+Comparar una prueba escrita directamente con Playwright contra la misma prueba organizada con Screenplay Pattern y Serenity/JS.
+
+La prueba funcional sera la misma utilizada en la Practica 07:
+
+1. Crear una tarea mediante API.
+2. Abrir la aplicacion Angular.
+3. Verificar que la tarea aparezca en la UI.
+4. Completar la tarea desde la UI.
+5. Consultar la tarea mediante API.
+6. Verificar que completed sea true.
+7. Eliminar la tarea mediante API.
+
+La diferencia sera la forma de organizar la automatizacion.
+
+
+PRERREQUISITOS
+--------------
+
+La Practica 07 debe estar disponible.
+
+Docker Desktop debe estar ejecutandose.
+
+La aplicacion debe estar disponible en:
+
+Frontend:
+http://localhost:4200
+
+Backend:
+http://localhost:8080
+
+
+ARCHIVOS PRINCIPALES
+--------------------
+
+BEFORE - PLAYWRIGHT DIRECTO
+
+test-automation\practices\day-03\practice-07\api-ui-integration-instructor.spec.ts
+
+
+AFTER - SCREENPLAY
+
+test-automation\practices\day-03\practice-08\after\api-ui-screenplay-instructor.spec.ts
+
+
+DOCUMENTO DE COMPARACION
+
+test-automation\practices\day-03\practice-08\comparison-before-after.txt
+
+
+============================================================
+PASO 1 - PREPARAR VARIABLES
+============================================================
+
+$REPO = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot"
+$TEST_AUTOMATION = $REPO + "\test-automation"
+
+$BEFORE = $TEST_AUTOMATION + "\practices\day-03\practice-07\api-ui-integration-instructor.spec.ts"
+
+$AFTER = $TEST_AUTOMATION + "\practices\day-03\practice-08\after\api-ui-screenplay-instructor.spec.ts"
+
+$COMPARISON = $TEST_AUTOMATION + "\practices\day-03\practice-08\comparison-before-after.txt"
+
+
+============================================================
+PASO 2 - VERIFICAR EL SUT
+============================================================
+
+Set-Location $REPO
+
+docker compose ps
+
+Debes observar los servicios:
+
+backend
+frontend
+postgres
+
+El backend debe estar disponible en el puerto 8080.
+
+El frontend debe estar disponible en el puerto 4200.
+
+
+============================================================
+PASO 3 - REVISAR EL BEFORE
+============================================================
+
+Get-Content $BEFORE
+
+Observa que la Practica 07 utiliza directamente elementos como:
+
+request.post()
+
+expect()
+
+page.goto()
+
+page.locator()
+
+getByRole('checkbox')
+
+request.get()
+
+request.delete()
+
+
+IDEA CLAVE
+
+El escenario funciona correctamente, pero el test principal conoce directamente:
+
+- llamadas HTTP;
+- localizadores;
+- acciones de UI;
+- assertions;
+- cleanup.
+
+
+============================================================
+PASO 4 - REVISAR EL AFTER
+============================================================
+
+Get-Content $AFTER
+
+Identifica ahora expresiones como:
+
+actor.whoCan()
+
+actor.attemptsTo()
+
+CreateTodoViaApi.called(...)
+
+CompleteTodoViaUi.called(...)
+
+VerifyTodoViaApi.matching(...)
+
+DeleteTodoViaApi.withId(...)
+
+
+IDEA CLAVE
+
+El test principal expresa principalmente las intenciones del Actor.
+
+Los detalles de implementacion se distribuyen entre diferentes componentes Screenplay.
+
+
+============================================================
+PASO 5 - REVISAR LA ESTRUCTURA SCREENPLAY
+============================================================
+
+Get-ChildItem ($TEST_AUTOMATION + "\practices\day-03\practice-08\after\screenplay") -Recurse -File |
+    Select-Object FullName
+
+Identifica las siguientes responsabilidades:
+
+
+MODELS
+
+TodoItem.ts
+
+Representa los datos de una tarea.
+
+
+QUESTIONS
+
+CreatedTodoId.ts
+
+Obtiene el id generado por el backend.
+
+
+TodoStatus.ts
+
+Consulta el estado visible de una tarea.
+
+
+STATE
+
+TodoList.ts
+
+Centraliza elementos utilizados para interactuar con la UI.
+
+
+TASKS
+
+CreateTodoViaApi.ts
+
+Crea una tarea mediante API.
+
+
+CompleteTodoViaUi.ts
+
+Completa una tarea desde la interfaz.
+
+
+VerifyTodoViaApi.ts
+
+Verifica mediante API el estado persistido.
+
+
+DeleteTodoViaApi.ts
+
+Realiza el cleanup mediante API.
+
+
+============================================================
+PASO 6 - REVISAR UNA TASK
+============================================================
+
+Get-Content (
+    $TEST_AUTOMATION +
+    "\practices\day-03\practice-08\after\screenplay\tasks\CompleteTodoViaUi.ts"
+)
+
+Observa la estructura:
+
+Task.where(...)
+
+Dentro de la Task aparecen interacciones y verificaciones como:
+
+Navigate.to(...)
+
+Ensure.eventually(...)
+
+Click.on(...)
+
+
+IDEA CLAVE
+
+El test principal ya no necesita conocer esos detalles.
+
+La Task encapsula COMO se realiza la intencion.
+
+
+============================================================
+PASO 7 - REVISAR UNA QUESTION
+============================================================
+
+Get-Content (
+    $TEST_AUTOMATION +
+    "\practices\day-03\practice-08\after\screenplay\questions\TodoStatus.ts"
+)
+
+Observa:
+
+TodoStatus.of(id)
+
+
+La Question representa:
+
+QUE quiere saber el Actor.
+
+En este caso:
+
+el estado visible de una tarea.
+
+
+============================================================
+PASO 8 - REVISAR EL STATE / UI MODEL
+============================================================
+
+Get-Content (
+    $TEST_AUTOMATION +
+    "\practices\day-03\practice-08\after\screenplay\state\TodoList.ts"
+)
+
+Identifica:
+
+taskWithId(id)
+
+checkboxFor(id)
+
+
+La implementacion utiliza el identificador real generado por el backend.
+
+Cada tarea se localiza mediante:
+
+data-testid="task-<id>"
+
+
+IDEA CLAVE
+
+Los localizadores quedan fuera del test principal.
+
+
+============================================================
+PASO 9 - REVISAR LA COMPARACION BEFORE / AFTER
+============================================================
+
+Get-Content $COMPARISON
+
+Compara especialmente:
+
+BEFORE
+
+request.post(...)
+
+AFTER
+
+CreateTodoViaApi.called(...)
+
+
+BEFORE
+
+page.locator(...)
+
+AFTER
+
+TodoList.taskWithId(...)
+
+
+BEFORE
+
+request.get(...)
+
+AFTER
+
+VerifyTodoViaApi.matching(...)
+
+
+BEFORE
+
+request.delete(...)
+
+AFTER
+
+DeleteTodoViaApi.withId(...)
+
+
+============================================================
+PASO 10 - VALIDAR QUE PLAYWRIGHT RECONOCE LA PRUEBA
+============================================================
+
+Set-Location $TEST_AUTOMATION
+
+npx.cmd playwright test "practices/day-03/practice-08/after/api-ui-screenplay-instructor.spec.ts" --list
+
+Debes observar:
+
+preparar por API, actuar por UI y verificar por API con Screenplay
+
+Y finalmente:
+
+Total: 1 test in 1 file
+
+
+============================================================
+PASO 11 - EJECUTAR LA VERSION SCREENPLAY
+============================================================
+
+Set-Location $TEST_AUTOMATION
+
+npx.cmd playwright test "practices/day-03/practice-08/after/api-ui-screenplay-instructor.spec.ts" --reporter=line
+
+Resultado esperado:
+
+1 passed
+
+
+============================================================
+PASO 12 - VALIDAR EL CLEANUP
+============================================================
+
+$TASKS_JSON = curl.exe -sS http://localhost:8080/api/tasks
+
+$TASKS = @($TASKS_JSON | ConvertFrom-Json)
+
+$P8_TASKS = @(
+    $TASKS | Where-Object {
+        $_.title -like "P8 Screenplay API UI *"
+    }
+)
+
+Write-Host ("P8 tasks remaining: " + $P8_TASKS.Count)
+
+Resultado esperado:
+
+P8 tasks remaining: 0
+
+
+============================================================
+RESULTADO
+============================================================
+
+El BEFORE y el AFTER prueban el mismo comportamiento.
+
+BEFORE:
+
+Playwright directo.
+
+El test contiene gran parte de los detalles tecnicos.
+
+
+AFTER:
+
+Screenplay Pattern.
+
+El escenario se expresa mediante:
+
+Actor
+
+Tasks
+
+Questions
+
+State / UI Model
+
+Models
+
+
+IDEA FINAL
+
+Screenplay no reemplaza Playwright.
+
+Playwright sigue realizando la automatizacion del navegador.
+
+Screenplay organiza la automatizacion alrededor de las intenciones del Actor.
+
+
+ANTES
+
+test con detalles tecnicos
+
+
+DESPUES
+
+Actor con intenciones

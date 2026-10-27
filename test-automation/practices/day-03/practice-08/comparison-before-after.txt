@@ -1,0 +1,571 @@
+PRACTICA 08 - REFACTOR DE PLAYWRIGHT DIRECTO A SCREENPLAY
+=========================================================
+
+OBJETIVO
+--------
+
+Comparar dos implementaciones del mismo escenario automatizado:
+
+BEFORE:
+Playwright Test directo.
+
+AFTER:
+Playwright Test organizado con Screenplay Pattern mediante Serenity/JS.
+
+El comportamiento probado NO cambia.
+
+En ambas versiones el flujo funcional es:
+
+1. Crear una tarea mediante API.
+2. Abrir la aplicacion Angular.
+3. Verificar que la tarea aparezca en la UI.
+4. Completar la tarea desde la UI.
+5. Consultar la tarea mediante API.
+6. Verificar que completed sea true.
+7. Eliminar la tarea mediante API.
+
+La diferencia esta en COMO se organiza y expresa la automatizacion.
+
+
+=========================================================
+BEFORE - PRACTICA 07
+=========================================================
+
+No se crea una copia del archivo BEFORE.
+
+Se reutiliza directamente:
+
+test-automation\practices\day-03\practice-07\api-ui-integration-instructor.spec.ts
+
+La Practica 07 usa Playwright Test directamente.
+
+El test principal contiene responsabilidades como:
+
+request.post()
+
+expect(...)
+
+page.goto()
+
+page.locator(...)
+
+getByRole('checkbox')
+
+check()
+
+request.get()
+
+request.delete()
+
+
+Representacion simplificada:
+
+test()
+ |
+ +-- POST por API
+ |
+ +-- assertions de la respuesta
+ |
+ +-- abrir navegador
+ |
+ +-- localizar la tarea
+ |
+ +-- localizar checkbox
+ |
+ +-- completar tarea
+ |
+ +-- GET por API
+ |
+ +-- assertions
+ |
+ `-- DELETE de cleanup
+
+
+CARACTERISTICA PRINCIPAL DEL BEFORE
+-----------------------------------
+
+El escenario funciona correctamente.
+
+Sin embargo, el test conoce directamente:
+
+- detalles HTTP;
+- endpoints;
+- localizadores;
+- acciones de interfaz;
+- assertions;
+- cleanup;
+- estructura completa del flujo.
+
+Las responsabilidades estan concentradas principalmente
+dentro del archivo del test.
+
+
+=========================================================
+AFTER - PRACTICA 08
+=========================================================
+
+Archivo principal:
+
+test-automation\practices\day-03\practice-08\after\api-ui-screenplay-instructor.spec.ts
+
+En la version AFTER aparece un Actor.
+
+El Actor realiza Tasks y responde Questions.
+
+
+Representacion simplificada:
+
+Actor
+ |
+ +-- CreateTodoViaApi
+ |
+ +-- CreatedTodoId
+ |
+ +-- CompleteTodoViaUi
+ |      |
+ |      +-- TodoList
+ |      `-- TodoStatus
+ |
+ +-- VerifyTodoViaApi
+ |
+ `-- DeleteTodoViaApi
+
+
+=========================================================
+1. ACTOR
+=========================================================
+
+BEFORE
+
+El test ejecuta directamente las operaciones:
+
+request.post()
+
+page.goto()
+
+request.get()
+
+request.delete()
+
+
+AFTER
+
+El escenario expresa lo que realiza un Actor:
+
+actor.attemptsTo(
+    CreateTodoViaApi.called(title)
+)
+
+actor.attemptsTo(
+    CompleteTodoViaUi.called(...)
+)
+
+actor.attemptsTo(
+    VerifyTodoViaApi.matching(...)
+)
+
+
+IDEA CLAVE
+
+El Actor representa a quien interactua con el sistema.
+
+El test deja de describir principalmente detalles tecnicos
+y comienza a expresar intenciones.
+
+
+=========================================================
+2. TASKS
+=========================================================
+
+Las Tasks representan acciones o intenciones del Actor.
+
+
+CreateTodoViaApi
+----------------
+
+Responsabilidad:
+
+Crear la tarea mediante POST y validar la respuesta inicial.
+
+
+CompleteTodoViaUi
+-----------------
+
+Responsabilidad:
+
+Abrir la aplicacion, encontrar la tarea y completarla
+desde la interfaz.
+
+
+VerifyTodoViaApi
+----------------
+
+Responsabilidad:
+
+Consultar la tarea mediante GET y verificar el estado
+persistido.
+
+
+DeleteTodoViaApi
+----------------
+
+Responsabilidad:
+
+Eliminar mediante API el dato creado por la prueba.
+
+
+BEFORE
+
+Estas operaciones estaban escritas directamente dentro
+del test principal.
+
+
+AFTER
+
+Cada intencion tiene un nombre y una responsabilidad
+separada.
+
+
+=========================================================
+3. QUESTIONS
+=========================================================
+
+Una Question representa informacion que el Actor puede
+consultar sobre el sistema.
+
+
+CreatedTodoId
+-------------
+
+Obtiene el identificador generado por el backend despues
+de crear la tarea.
+
+
+TodoStatus
+----------
+
+Consulta el atributo data-status de la tarea mostrada
+en la interfaz.
+
+
+IDEA CLAVE
+
+Las Questions separan:
+
+"que queremos saber"
+
+de:
+
+"como obtenemos esa informacion".
+
+
+=========================================================
+4. STATE / UI MODEL
+=========================================================
+
+Archivo:
+
+screenplay\state\TodoList.ts
+
+
+TodoList centraliza los elementos necesarios para trabajar
+con una tarea en la interfaz.
+
+
+Actualmente expone:
+
+taskWithId(id)
+
+checkboxFor(id)
+
+
+La tarea se identifica mediante el hook estable:
+
+data-testid="task-<id>"
+
+
+El checkbox se localiza dentro de esa tarea mediante:
+
+input[type="checkbox"]
+
+
+BEFORE
+
+Los localizadores viven directamente en el flujo del test.
+
+
+AFTER
+
+Los detalles para localizar elementos quedan separados
+del escenario principal.
+
+
+=========================================================
+5. MODEL
+=========================================================
+
+Archivo:
+
+screenplay\models\TodoItem.ts
+
+
+TodoItem representa la estructura utilizada por la API:
+
+id
+
+title
+
+completed
+
+
+Esto permite expresar explicitamente la informacion que
+esperamos recibir del backend.
+
+
+=========================================================
+6. COMPARACION DIRECTA
+=========================================================
+
+BEFORE
+------
+
+request.post(...)
+
+
+AFTER
+-----
+
+CreateTodoViaApi.called(title)
+
+
+---------------------------------------------------------
+
+
+BEFORE
+------
+
+const task = page.locator(...)
+
+
+AFTER
+-----
+
+TodoList.taskWithId(id)
+
+
+---------------------------------------------------------
+
+
+BEFORE
+------
+
+await task.getByRole('checkbox').check()
+
+
+AFTER
+-----
+
+CompleteTodoViaUi.called({
+    id,
+    title
+})
+
+
+---------------------------------------------------------
+
+
+BEFORE
+------
+
+expect(task).toHaveAttribute(
+    'data-status',
+    'completed'
+)
+
+
+AFTER
+-----
+
+TodoStatus.of(id)
+
+
+---------------------------------------------------------
+
+
+BEFORE
+------
+
+request.get(...)
+
+
+AFTER
+-----
+
+VerifyTodoViaApi.matching({
+    id,
+    title
+})
+
+
+---------------------------------------------------------
+
+
+BEFORE
+------
+
+request.delete(...)
+
+
+AFTER
+-----
+
+DeleteTodoViaApi.withId(id)
+
+
+=========================================================
+7. QUE NO CAMBIO
+=========================================================
+
+Screenplay NO cambia el comportamiento funcional probado.
+
+Seguimos comprobando exactamente el mismo flujo:
+
+API
+ |
+ v
+crear tarea
+ |
+ v
+UI
+ |
+ v
+completar tarea
+ |
+ v
+API
+ |
+ v
+verificar persistencia
+ |
+ v
+cleanup
+
+
+Tampoco elimina Playwright.
+
+Playwright sigue siendo el motor utilizado para interactuar
+con el navegador.
+
+Serenity/JS agrega Screenplay como una capa de organizacion
+y expresion de la automatizacion.
+
+
+=========================================================
+8. QUE SI CAMBIO
+=========================================================
+
+ANTES
+
+El archivo de prueba conoce casi todos los detalles
+tecnicos del escenario.
+
+
+DESPUES
+
+Las responsabilidades estan distribuidas entre:
+
+Actor
+
+Tasks
+
+Questions
+
+State / UI Model
+
+Models
+
+
+El test principal se concentra principalmente en expresar:
+
+QUE quiere hacer el Actor.
+
+Los componentes Screenplay encapsulan:
+
+COMO se realiza cada operacion.
+
+
+=========================================================
+9. BENEFICIO PEDAGOGICO
+=========================================================
+
+Screenplay permite observar una separacion clara entre:
+
+INTENCIONES
+
+CreateTodoViaApi
+
+CompleteTodoViaUi
+
+VerifyTodoViaApi
+
+DeleteTodoViaApi
+
+
+CONSULTAS
+
+CreatedTodoId
+
+TodoStatus
+
+
+INTERFAZ
+
+TodoList
+
+
+DATOS
+
+TodoItem
+
+
+ORQUESTACION
+
+api-ui-screenplay-instructor.spec.ts
+
+
+=========================================================
+10. IDEA FINAL
+=========================================================
+
+Playwright directo puede ser suficiente para pruebas
+pequenas y sencillas.
+
+Cuando una suite crece, mezclar en cada test:
+
+- llamadas HTTP;
+- localizadores;
+- interacciones;
+- assertions;
+- datos;
+- cleanup;
+
+puede dificultar el mantenimiento.
+
+Screenplay propone separar esas responsabilidades
+alrededor del comportamiento del Actor.
+
+Por eso la transformacion de P7 a P8 puede resumirse como:
+
+ANTES
+
+test con detalles tecnicos
+
+
+DESPUES
+
+Actor con intenciones
+
+
+El escenario probado es el mismo.
+
+Lo que cambia es la arquitectura de la automatizacion.
