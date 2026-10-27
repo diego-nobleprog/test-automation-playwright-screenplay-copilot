@@ -2,126 +2,274 @@ PRACTICA 07 - INTEGRACION API + UI CON PLAYWRIGHT
 
 OBJETIVO
 
-Construir una prueba que combine llamadas HTTP y acciones de interfaz.
+Combinar peticiones HTTP y acciones de interfaz dentro de una misma prueba Playwright.
 
-El flujo sera:
+Flujo de la practica:
 
-1. Crear una tarea por API.
-2. Abrir la aplicacion en el navegador.
-3. Verificar que la tarea creada por API aparece en la UI.
-4. Completar la tarea desde la UI.
-5. Consultar la tarea por API.
-6. Verificar que completed sea true.
-7. Eliminar la tarea por API como cleanup.
+API -> preparar
+UI  -> actuar
+API -> verificar
+API -> limpiar
 
-CONCEPTOS
 
-- Fixture request de Playwright.
-- request.post().
-- request.get().
-- request.delete().
-- Validacion de status HTTP.
-- Lectura de respuestas JSON.
-- Preparacion de datos mediante API.
-- Accion del usuario mediante UI.
-- Verificacion final mediante API.
-- Cleanup con try/finally.
-
-NO SE UTILIZARA EN ESTA PRACTICA
-
-- Screenplay Pattern.
-- Page Object Model.
-- Acceso directo a PostgreSQL desde la prueba.
-- Mocks.
-- GitHub Copilot.
-
-PREPARACION
-
-Desde la raiz del repositorio:
+============================================================
+1. PREPARAR EL LABORATORIO
+============================================================
 
 $REPO = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot"
+$TEST_AUTOMATION = $REPO + "\test-automation"
+$INSTRUCTOR = $TEST_AUTOMATION + "\practices\day-03\practice-07\api-ui-integration-instructor.spec.ts"
+
 Set-Location $REPO
 
+
+============================================================
+2. LEVANTAR LA APLICACION
+============================================================
+
 docker compose up -d
+
 docker compose ps
 
-La aplicacion debe estar disponible en:
+Debes observar los servicios:
 
-Frontend: http://localhost:4200
-API:      http://localhost:8080/api/tasks
+frontend
+backend
+postgres
 
-EJERCICIO
 
-Crea un archivo Playwright llamado:
+============================================================
+3. VALIDAR QUE LA API RESPONDE
+============================================================
 
-api-ui-integration.spec.ts
+curl.exe -i http://localhost:8080/
 
-La prueba debe recibir los fixtures page y request.
+Resultado esperado:
 
-PASO 1
-Genera un titulo unico para la tarea.
-Puedes utilizar Date.now().
+HTTP/1.1 200 OK
 
-PASO 2
-Usa request.post() para crear la tarea en:
-http://localhost:8080/api/tasks
+Body esperado:
 
-El body debe contener el titulo.
+{"status":"running"}
 
-Verifica que el status HTTP sea 201.
 
-PASO 3
-Lee el JSON de la respuesta.
+============================================================
+4. CONSULTAR LAS TAREAS
+============================================================
 
-Guarda el id de la tarea creada.
-Verifica que:
+curl.exe -i http://localhost:8080/api/tasks
 
-- title sea el esperado.
-- completed sea false.
+Resultado esperado:
 
-PASO 4
-Abre http://localhost:4200.
+HTTP/1.1 200 OK
 
-Localiza en la UI la tarea creada por API.
-Verifica que sea visible y que su data-status sea pending.
+Si no existen tareas:
 
-PASO 5
-Completa la tarea mediante su checkbox.
+[]
 
-Verifica en la UI que data-status cambie a completed.
 
-PASO 6
-Usa request.get() para consultar:
+============================================================
+5. CREAR UNA TAREA DIRECTAMENTE POR API
+============================================================
 
-http://localhost:8080/api/tasks/{id}
+$REQUEST_FILE = $REPO + "\request-p7.json"
 
-Verifica:
+Set-Content -Path $REQUEST_FILE -Encoding ASCII -Value '{"title":"P7 tarea manual"}'
 
-- status 200.
-- id correcto.
-- title correcto.
-- completed igual a true.
+$CREATE_RESPONSE = curl.exe -sS -X POST -H "Content-Type: application/json" --data-binary "@$REQUEST_FILE" http://localhost:8080/api/tasks
 
-PASO 7
-Implementa cleanup mediante try/finally.
+$CREATE_RESPONSE
 
-Si la tarea fue creada, utiliza request.delete() para eliminarla aunque una validacion falle.
+Resultado similar a:
 
-EJECUCION
+{"id":1,"title":"P7 tarea manual","completed":false}
 
-$AUTOMATION = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot\test-automation"
-Set-Location $AUTOMATION
+Convierte la respuesta a un objeto PowerShell:
 
-npx.cmd playwright test "<ruta-del-spec>" --reporter=line
+$CREATED_TASK = $CREATE_RESPONSE | ConvertFrom-Json
 
-RESULTADO ESPERADO
+Obtiene el id real:
 
-La prueba debe terminar correctamente y mostrar:
+$TASK_ID = $CREATED_TASK.id
+
+Write-Host ("Task id: " + $TASK_ID)
+
+
+============================================================
+6. CONSULTAR LA TAREA POR ID
+============================================================
+
+curl.exe -i ("http://localhost:8080/api/tasks/" + $TASK_ID)
+
+Resultado esperado:
+
+HTTP/1.1 200 OK
+
+El body debe contener:
+
+"title":"P7 tarea manual"
+
+y:
+
+"completed":false
+
+
+============================================================
+7. COMPROBAR EL DATO EN LA INTERFAZ
+============================================================
+
+Start-Process "http://localhost:4200"
+
+En el navegador debes observar:
+
+P7 tarea manual
+
+La tarea aparece en Angular aunque fue creada directamente mediante:
+
+POST /api/tasks
+
+
+============================================================
+8. ELIMINAR LA TAREA MANUAL
+============================================================
+
+curl.exe -i -X DELETE ("http://localhost:8080/api/tasks/" + $TASK_ID)
+
+Resultado esperado:
+
+HTTP/1.1 204 No Content
+
+Comprueba que ya no existe:
+
+curl.exe -i ("http://localhost:8080/api/tasks/" + $TASK_ID)
+
+Resultado esperado:
+
+HTTP/1.1 404 Not Found
+
+Elimina el archivo temporal:
+
+Remove-Item -Force $REQUEST_FILE
+
+
+============================================================
+9. REVISAR EL TEST INSTRUCTOR
+============================================================
+
+Get-Content $INSTRUCTOR
+
+Identifica en el codigo:
+
+request.post()
+
+Prepara el dato mediante API.
+
+page.goto()
+
+Abre la aplicacion.
+
+getByRole('checkbox').check()
+
+Realiza la accion del usuario desde la UI.
+
+request.get()
+
+Verifica mediante API el estado persistido.
+
+request.delete()
+
+Elimina el dato creado por la prueba.
+
+
+============================================================
+10. VALIDAR QUE PLAYWRIGHT RECONOCE LA PRUEBA
+============================================================
+
+Set-Location $TEST_AUTOMATION
+
+npx.cmd playwright test "practices/day-03/practice-07/api-ui-integration-instructor.spec.ts" --list
+
+Debes observar:
+
+preparar por API, actuar por UI y verificar por API
+
+
+============================================================
+11. EJECUTAR LA PRUEBA
+============================================================
+
+npx.cmd playwright test "practices/day-03/practice-07/api-ui-integration-instructor.spec.ts" --reporter=line
+
+Resultado esperado:
 
 1 passed
 
-IDEA CLAVE
 
-No todo el flujo de una prueba necesita ejecutarse por la interfaz.
-La API puede preparar datos y verificar estado de forma rapida.
-La UI se reserva para el comportamiento que realmente queremos validar desde la perspectiva del usuario.
+============================================================
+12. OBSERVAR LA PRUEBA PASO A PASO
+============================================================
+
+Ejecuta:
+
+npx.cmd playwright test "practices/day-03/practice-07/api-ui-integration-instructor.spec.ts" --debug
+
+Playwright abrira:
+
+- el navegador;
+- Playwright Inspector;
+- la prueba detenida para poder avanzar paso a paso.
+
+Utiliza el boton:
+
+Step over
+
+para observar cada accion de la prueba.
+
+Pon especial atencion cuando la prueba:
+
+1. abre Angular;
+2. encuentra la tarea creada previamente por API;
+3. localiza el checkbox;
+4. marca la tarea como completada;
+5. verifica visualmente el cambio de estado.
+
+El POST inicial y el GET/DELETE posteriores ocurren mediante API, por lo que no producen una accion visible en el navegador.
+
+
+============================================================
+13. COMPROBAR EL CLEANUP
+============================================================
+
+Set-Location $REPO
+
+$TASKS_JSON = curl.exe -sS http://localhost:8080/api/tasks
+
+$TASKS_JSON
+
+$TASKS = @($TASKS_JSON | ConvertFrom-Json)
+
+$P7_TASKS = @($TASKS | Where-Object { $_.title -like "P7 API UI *" })
+
+Write-Host ("P7 tasks remaining: " + $P7_TASKS.Count)
+
+Resultado esperado:
+
+P7 tasks remaining: 0
+
+
+============================================================
+14. IDEA CLAVE
+============================================================
+
+API -> preparar
+
+UI -> actuar
+
+API -> verificar
+
+API -> limpiar
+
+
+============================================================
+FIN DE LA PRACTICA
+============================================================
