@@ -16,7 +16,12 @@ services:
     working_dir: /workspace
     volumes:
       - ./backend:/workspace
-    command: ["tail", "-f", "/dev/null"]
+    command: ["dotnet", "run", "--no-launch-profile", "--project", "/workspace/TodoApi.csproj", "--urls", "http://0.0.0.0:8080"]
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - lab-network
 
