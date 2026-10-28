@@ -1,0 +1,2313 @@
+PRACTICA 09
+AUTOMATIZACION ASISTIDA POR IA CON GITHUB COPILOT
+=================================================
+
+PROPOSITO
+=========
+
+Esta guia reproduce de principio a fin la Practice 09 tal como fue
+preparada y validada.
+
+Debe permitir al instructor realizar nuevamente:
+
+- creacion de practica_09 desde practica_08;
+- configuracion del contexto de GitHub Copilot;
+- instrucciones globales;
+- instrucciones especificas por ruta;
+- AGENTS.md;
+- Custom Agent Test Automation;
+- apertura de Visual Studio Code;
+- seleccion del agente Test Automation;
+- configuracion de Playwright MCP;
+- arranque del servidor MCP;
+- inspeccion real de la aplicacion;
+- generacion de codigo con Copilot;
+- revision del codigo antes de ejecutarlo;
+- ejecucion simple;
+- ejecucion repetida;
+- code review asistido por Copilot;
+- correccion de problemas detectados;
+- cleanup;
+- validacion final;
+- manejo generico de errores durante la clase.
+
+STACK
+=====
+
+- Windows 11
+- PowerShell 5.1
+- Visual Studio Code
+- Node.js
+- npm
+- TypeScript
+- Playwright
+- Serenity/JS 3.37.1
+- Screenplay Pattern
+- Angular
+- ASP.NET Core
+- PostgreSQL
+- Docker Compose
+- GitHub Copilot
+- Playwright MCP
+
+REPOSITORIO
+===========
+
+C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot
+
+
+REGLA IMPORTANTE
+================
+
+El codigo generado por inteligencia artificial debe considerarse:
+
+CODIGO CANDIDATO
+
+No asumir que es correcto solamente porque:
+
+- parece correcto;
+- compila;
+- Playwright lo descubre;
+- pasa una vez;
+- pasa varias veces.
+
+Flujo de trabajo:
+
+CONTEXTO
+   |
+   v
+COPILOT
+   |
+   v
+PLAYWRIGHT MCP
+   |
+   v
+CODIGO GENERADO
+   |
+   v
+REVISION HUMANA
+   |
+   v
+EJECUCION
+   |
+   v
+HALLAZGOS
+   |
+   v
+CORRECCION CON COPILOT
+   |
+   v
+REVALIDACION
+
+
+ESCENARIO
+=========
+
+POST /api/tasks
+        |
+        v
+Crear tarea mediante API
+        |
+        v
+Obtener id
+        |
+        v
+Abrir http://localhost:4200
+        |
+        v
+Localizar tarea
+        |
+        v
+Eliminar mediante UI
+        |
+        v
+GET /api/tasks/{id}
+        |
+        v
+Verificar HTTP 404
+
+
+============================================================
+PARTE 1 - CREAR PRACTICA 09
+============================================================
+
+PASO 1 - CREAR LA RAMA DESDE PRACTICA 08
+----------------------------------------
+
+Ejecutar:
+
+$REPO = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot"
+
+Set-Location $REPO
+
+git switch practica_08
+
+git pull --ff-only origin practica_08
+
+git status
+
+git switch -c practica_09
+
+git log -3 --oneline
+
+
+RESULTADO DE REFERENCIA
+-----------------------
+
+Switched to a new branch 'practica_09'
+
+La base utilizada durante la preparacion fue:
+
+714fe90 docs: add visual Screenplay execution to practice 8
+7b9d53a feat: add practice 8 Screenplay refactor
+e9b6880 docs: finalize practice 7 API UI integration
+
+
+IMPORTANTE
+----------
+
+Practice 08 es la referencia arquitectonica:
+
+test-automation/practices/day-03/practice-08/
+
+
+============================================================
+PARTE 2 - INSTRUCCIONES GLOBALES PARA COPILOT
+============================================================
+
+PASO 2 - CREAR .github/copilot-instructions.md
+----------------------------------------------
+
+Ejecutar:
+
+$REPO = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot"
+$FILE = $REPO + "\.github\copilot-instructions.md"
+
+New-Item -ItemType Directory -Force ($REPO + "\.github") | Out-Null
+
+$CONTENT = @'
+# GitHub Copilot Instructions
+
+This repository contains a test automation training project.
+
+## Technology stack
+
+- TypeScript
+- Playwright
+- Serenity/JS
+- Screenplay Pattern
+- Angular frontend
+- ASP.NET Core backend
+- PostgreSQL
+- Docker Compose
+
+## Test automation architecture
+
+New automation code must follow the existing Serenity/JS Screenplay architecture.
+
+Prefer these responsibilities:
+
+- Actor: represents the user or system performing the scenario.
+- Tasks: represent business intentions and actions.
+- Questions: retrieve information for assertions.
+- State or UI Model: centralizes locators and UI elements.
+- Models: represent domain data.
+
+Do not place all API calls, locators, assertions, and cleanup logic directly in the spec when an appropriate Screenplay abstraction can be used.
+
+Before generating new automation code, inspect the existing implementation under:
+
+test-automation/practices/day-03/practice-08/
+
+Use Practice 08 as the architectural reference.
+
+## Playwright and Serenity/JS rules
+
+- Use the Serenity/JS APIs available in this repository.
+- Do not invent methods, imports, classes, or APIs.
+- Check package.json and existing source code before choosing an API.
+- Do not assume that APIs from newer Serenity/JS versions are available.
+- Avoid arbitrary waits such as page.waitForTimeout().
+- Prefer observable conditions and eventual assertions.
+- Prefer stable locators already provided by the application.
+- Prefer data-testid when a stable test identifier exists.
+- Keep locators centralized in the UI model when possible.
+
+## Test data and independence
+
+- Tests must be independently executable.
+- Generate unique test data when required.
+- Do not depend on data created by another test.
+- Clean up data created by the scenario.
+
+## API and UI scenarios
+
+When a scenario combines API and UI:
+
+- Use API operations for setup or verification when appropriate.
+- Use the UI only for the user behavior being demonstrated.
+- Keep API responsibilities separated from UI responsibilities.
+- Use CallAnApi for Serenity/JS API interactions when following the existing framework.
+
+## Security
+
+- Never hardcode passwords, access tokens, API keys, secrets, or credentials.
+- Do not commit secrets to the repository.
+- Use environment variables or approved configuration mechanisms when credentials are required.
+
+## AI-generated code
+
+Treat generated code as candidate code, not as automatically correct code.
+
+Before considering generated automation complete:
+
+1. Verify every imported API exists.
+2. Verify locators against the real application.
+3. Review wait strategies.
+4. Verify test independence.
+5. Verify cleanup.
+6. Verify that no secrets or credentials were introduced.
+7. Compile and execute the test.
+'@
+
+[System.IO.File]::WriteAllText(
+    $FILE,
+    $CONTENT.TrimEnd([char]13, [char]10) + [Environment]::NewLine,
+    [System.Text.UTF8Encoding]::new($false)
+)
+
+Get-Content $FILE
+
+git status --short
+
+
+RESULTADO ESPERADO
+------------------
+
+?? .github/
+
+
+============================================================
+PARTE 3 - INSTRUCCIONES ESPECIFICAS POR RUTA
+============================================================
+
+PASO 3 - CREAR test-automation.instructions.md
+----------------------------------------------
+
+Ejecutar:
+
+$REPO = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot"
+$DIR = $REPO + "\.github\instructions"
+$FILE = $DIR + "\test-automation.instructions.md"
+
+New-Item -ItemType Directory -Force $DIR | Out-Null
+
+$CONTENT = @'
+---
+applyTo: "test-automation/**/*.ts"
+---
+
+# Test Automation TypeScript Instructions
+
+These instructions apply specifically to TypeScript test automation code.
+
+## Architecture
+
+Follow the Serenity/JS Screenplay Pattern used in Practice 08.
+
+Before creating new code, inspect:
+
+test-automation/practices/day-03/practice-08/
+
+Maintain separation of responsibilities:
+
+- Specs orchestrate the scenario.
+- Tasks represent business actions and intentions.
+- Questions retrieve information used by assertions.
+- State or UI Model objects centralize locators.
+- Models represent domain data.
+
+Do not place the complete implementation directly in the spec.
+
+## Serenity/JS
+
+This repository uses Serenity/JS 3.37.1.
+
+Only use APIs available in the installed version.
+
+Before using a Serenity/JS method:
+
+1. Check package.json.
+2. Inspect similar code already working in this repository.
+3. Reuse existing patterns whenever possible.
+4. Do not invent fluent APIs or methods based on newer documentation.
+
+## UI automation
+
+Prefer existing stable application hooks.
+
+For Todo items, prefer the existing data-testid convention:
+
+task-<id>
+
+Keep selectors in the State or UI Model instead of scattering them across Tasks or specs.
+
+Do not use arbitrary sleeps or fixed waits.
+
+Avoid:
+
+page.waitForTimeout(...)
+
+Prefer observable conditions and Serenity/JS eventual assertions.
+
+## API automation
+
+Use Serenity/JS REST capabilities when implementing Screenplay API interactions.
+
+Use CallAnApi as an Actor ability.
+
+Keep API setup, verification, and cleanup in dedicated Screenplay abstractions when appropriate.
+
+## Test data
+
+Every generated test must be independently executable.
+
+Use unique data when creating Todo items.
+
+Do not rely on tasks created by previous tests.
+
+Clean up any data created by the scenario unless the scenario itself removes it.
+
+## Generated code review
+
+Generated code is not considered complete until it has been reviewed.
+
+Check:
+
+- imports
+- installed API compatibility
+- locator stability
+- waits
+- test independence
+- cleanup
+- secrets
+- compilation
+- real execution
+'@
+
+[System.IO.File]::WriteAllText(
+    $FILE,
+    $CONTENT.TrimEnd([char]13, [char]10) + [Environment]::NewLine,
+    [System.Text.UTF8Encoding]::new($false)
+)
+
+Get-Content $FILE
+
+git status --short
+
+
+DIFERENCIA
+----------
+
+.github/copilot-instructions.md
+
+aplica a todo el repositorio.
+
+
+.github/instructions/test-automation.instructions.md
+
+aplica especificamente a:
+
+test-automation/**/*.ts
+
+
+============================================================
+PARTE 4 - AGENTS.MD
+============================================================
+
+PASO 4 - CREAR AGENTS.md
+------------------------
+
+Ejecutar:
+
+$REPO = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot"
+$FILE = $REPO + "\AGENTS.md"
+
+$CONTENT = @'
+# Agent Instructions
+
+This repository contains a training project for test automation using Playwright, Serenity/JS, Screenplay Pattern, and GitHub Copilot.
+
+## Before changing test automation code
+
+Before creating or modifying TypeScript automation code:
+
+1. Inspect package.json to confirm installed dependencies and versions.
+2. Inspect the working Screenplay implementation under:
+
+test-automation/practices/day-03/practice-08/
+
+3. Reuse existing architecture and conventions when possible.
+4. Do not invent APIs, methods, imports, classes, or framework capabilities.
+5. Prefer existing working examples over assumptions based on newer documentation.
+
+## Screenplay architecture
+
+Automation code should express business intentions through Screenplay abstractions.
+
+Prefer:
+
+- Tasks for actions and business intentions.
+- Questions for information used in assertions.
+- State or UI Model objects for locators.
+- Models for domain data.
+- Specs for scenario orchestration.
+
+Avoid putting the complete implementation directly in the spec.
+
+## Browser automation
+
+When interacting with the Todo application:
+
+- Inspect the real application before assuming a locator.
+- Prefer stable application hooks.
+- Prefer data-testid when available.
+- Do not introduce arbitrary sleeps.
+- Do not use page.waitForTimeout() as a synchronization strategy.
+- Prefer observable conditions.
+
+## API automation
+
+For Screenplay API interactions:
+
+- Use CallAnApi.
+- Keep API setup, verification, and cleanup separated when appropriate.
+- Verify actual endpoint behavior before generating assertions.
+
+## Test independence
+
+Every test must:
+
+- be independently executable
+- create unique data when required
+- avoid depending on previous tests
+- clean up created data when appropriate
+
+## Security
+
+Never introduce:
+
+- passwords
+- access tokens
+- API keys
+- secrets
+- credentials
+
+Do not hardcode sensitive values.
+
+## AI-generated code review
+
+Generated code is candidate code.
+
+Before accepting generated code:
+
+1. Verify imports.
+2. Verify framework API compatibility.
+3. Verify locators.
+4. Verify wait strategies.
+5. Verify test independence.
+6. Verify cleanup.
+7. Verify security.
+8. Compile the code.
+9. Execute the real test.
+10. Review the final behavior.
+'@
+
+[System.IO.File]::WriteAllText(
+    $FILE,
+    $CONTENT.TrimEnd([char]13, [char]10) + [Environment]::NewLine,
+    [System.Text.UTF8Encoding]::new($false)
+)
+
+Get-Content $FILE
+
+git status --short
+
+
+============================================================
+PARTE 5 - CUSTOM AGENT
+============================================================
+
+PASO 5 - CREAR TEST AUTOMATION
+------------------------------
+
+Ejecutar:
+
+$REPO = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot"
+$DIR = $REPO + "\.github\agents"
+$FILE = $DIR + "\test-automation.agent.md"
+
+New-Item -ItemType Directory -Force $DIR | Out-Null
+
+$CONTENT = @'
+---
+name: Test Automation
+description: Specialized agent for Playwright, Serenity/JS and Screenplay test automation in this repository.
+target: vscode
+---
+
+# Test Automation Agent
+
+You are the test automation specialist for this repository.
+
+Your responsibility is to create and review automation code that follows the existing Playwright, Serenity/JS, and Screenplay architecture.
+
+## Before implementing anything
+
+Inspect:
+
+- package.json
+- .github/copilot-instructions.md
+- .github/instructions/test-automation.instructions.md
+- AGENTS.md
+- test-automation/practices/day-03/practice-08/
+
+Treat the working Practice 08 implementation as the primary architectural reference.
+
+Do not assume that an API exists because it appears in newer documentation.
+
+## Architecture
+
+Follow Screenplay Pattern.
+
+Use:
+
+- Actor for scenario execution.
+- Tasks for actions and business intentions.
+- Questions for information and assertions.
+- State or UI Model objects for selectors.
+- Models for domain data.
+- Specs only for orchestration.
+
+Do not put the complete implementation directly in the spec.
+
+## Serenity/JS compatibility
+
+The repository uses Serenity/JS 3.37.1.
+
+Before using an API:
+
+1. Verify that the installed package provides it.
+2. Search the repository for an existing working example.
+3. Prefer patterns already validated in Practice 08.
+4. Never invent methods or fluent APIs.
+
+## UI automation
+
+Before choosing a locator:
+
+1. Inspect the real application when browser tools are available.
+2. Prefer existing stable hooks.
+3. Prefer data-testid when available.
+4. Centralize selectors in the UI model.
+5. Avoid arbitrary waits.
+
+Never use page.waitForTimeout() as a synchronization strategy.
+
+## API automation
+
+For Screenplay API scenarios:
+
+- Use CallAnApi.
+- Separate setup, verification, and cleanup responsibilities.
+- Verify endpoint behavior before making assertions.
+
+## Test independence
+
+Generated tests must:
+
+- create unique data when needed
+- run independently
+- not depend on previous executions
+- clean up created data when appropriate
+
+## Security
+
+Never introduce:
+
+- passwords
+- tokens
+- API keys
+- secrets
+- credentials
+
+## Review generated code
+
+Before saying the implementation is complete:
+
+1. Review all imports.
+2. Check API compatibility.
+3. Check locator stability.
+4. Check waits.
+5. Check test independence.
+6. Check cleanup.
+7. Check security.
+8. Compile the code.
+9. Execute the test.
+10. Report any assumptions or unresolved problems.
+
+Generated code is candidate code until it has been reviewed and executed successfully.
+'@
+
+[System.IO.File]::WriteAllText(
+    $FILE,
+    $CONTENT.TrimEnd([char]13, [char]10) + [Environment]::NewLine,
+    [System.Text.UTF8Encoding]::new($false)
+)
+
+Get-Content $FILE
+
+git status --short
+
+
+ESTRUCTURA
+----------
+
+.github/
+|
++-- copilot-instructions.md
+|
++-- instructions/
+|   |
+|   +-- test-automation.instructions.md
+|
++-- agents/
+    |
+    +-- test-automation.agent.md
+
+AGENTS.md
+
+
+============================================================
+PARTE 6 - VISUAL STUDIO CODE
+============================================================
+
+PASO 6 - ABRIR EL PROYECTO
+--------------------------
+
+Ejecutar:
+
+$REPO = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot"
+
+Set-Location $REPO
+
+code --version
+
+code .
+
+
+DENTRO DE VISUAL STUDIO CODE
+----------------------------
+
+1. Esperar a que abra el workspace.
+
+2. Abrir GitHub Copilot Chat.
+
+3. Buscar el selector de agente o modo.
+
+4. Abrirlo.
+
+5. Buscar:
+
+Test Automation
+
+6. Seleccionar:
+
+Test Automation
+
+
+IMPORTANTE
+----------
+
+Los siguientes prompts de la practica se ejecutan con:
+
+Test Automation
+
+seleccionado.
+
+
+============================================================
+PARTE 7 - VALIDAR EL CONTEXTO DE COPILOT
+============================================================
+
+PASO 7
+------
+
+En Copilot Chat pegar:
+
+Antes de realizar cualquier cambio, revisa las instrucciones del repositorio y la arquitectura de automatizacion existente.
+
+Respondeme lo siguiente:
+
+1. Que version de Serenity/JS utiliza este proyecto?
+2. Que practica existente debe utilizarse como referencia arquitectonica?
+3. Que responsabilidades de Screenplay deben mantenerse separadas?
+4. Que estrategia de localizacion debe preferirse para los elementos Todo?
+5. Esta permitido utilizar esperas arbitrarias como page.waitForTimeout()?
+
+No crees ni modifiques ningun archivo todavia.
+
+
+RESPUESTA DE REFERENCIA
+-----------------------
+
+Copilot debe identificar:
+
+Serenity/JS 3.37.1
+
+Practice 08
+
+Specs
+
+Tasks
+
+Questions
+
+State/UI Model
+
+Models
+
+data-testid="task-<id>"
+
+No usar page.waitForTimeout().
+
+
+CONCEPTO
+--------
+
+SIN CONTEXTO:
+
+Prompt
+  |
+  v
+Copilot interpreta
+
+
+CON CONTEXTO:
+
+copilot-instructions.md
+        +
+test-automation.instructions.md
+        +
+AGENTS.md
+        +
+Test Automation
+        |
+        v
+Copilot conoce nuestro framework
+
+
+============================================================
+PARTE 8 - PLAYWRIGHT MCP
+============================================================
+
+PASO 8 - CREAR .mcp.json
+------------------------
+
+Ejecutar:
+
+$REPO = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot"
+$FILE = $REPO + "\.mcp.json"
+
+Set-Location $REPO
+
+$CONTENT = @'
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@latest"
+      ]
+    }
+  }
+}
+'@
+
+[System.IO.File]::WriteAllText(
+    $FILE,
+    $CONTENT.TrimEnd([char]13, [char]10) + [Environment]::NewLine,
+    [System.Text.UTF8Encoding]::new($false)
+)
+
+Get-Content $FILE
+
+git status --short
+
+
+PASO 9 - VERIFICAR EL SUT
+-------------------------
+
+Ejecutar:
+
+$REPO = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot"
+
+Set-Location $REPO
+
+docker compose ps
+
+
+Debemos tener disponibles:
+
+Frontend:
+
+http://localhost:4200
+
+Backend:
+
+http://localhost:8080
+
+
+PASO 10 - ARRANCAR MCP EN VS CODE
+---------------------------------
+
+Dentro de Visual Studio Code:
+
+1. Presionar:
+
+Ctrl+Shift+P
+
+2. Buscar:
+
+MCP: List Servers
+
+3. Seleccionar:
+
+playwright
+
+4. Si aparece detenido:
+
+Start Server
+
+5. Confirmar que el servidor quede iniciado.
+
+
+============================================================
+PARTE 9 - INSPECCION REAL DE LA APLICACION
+============================================================
+
+PASO 11
+-------
+
+Con Test Automation seleccionado pegar:
+
+Usa Playwright MCP para abrir la aplicacion en:
+
+http://localhost:4200
+
+Inspecciona la interfaz de la aplicacion Todo.
+
+No modifiques ningun archivo ni generes codigo todavia.
+
+Respondeme unicamente:
+
+1. Que elementos principales encuentras en la pagina.
+2. Como se identifica el campo para crear una nueva tarea.
+3. Como se representa una tarea existente.
+4. Que controles existen para completar y eliminar una tarea.
+5. Que localizadores o atributos estables observas que podrian utilizarse en automatizacion.
+
+
+DURANTE LA PREPARACION MCP UTILIZO
+----------------------------------
+
+Navigate to a URL
+
+Page snapshot
+
+Evaluate JavaScript
+
+
+Tambien reviso:
+
+frontend/src/app/app.html
+
+frontend/src/app/app.ts
+
+
+HALLAZGOS
+---------
+
+Campo de nueva tarea:
+
+aria-label="Nueva tarea"
+
+
+Tarea:
+
+data-testid="task-<id>"
+
+
+Estado:
+
+data-status="pending"
+
+data-status="completed"
+
+
+Completar:
+
+aria-label="Completar <titulo>"
+
+
+Eliminar:
+
+aria-label="Eliminar <titulo>"
+
+
+Contadores:
+
+data-testid="pending-count"
+
+data-testid="completed-count"
+
+
+Regiones:
+
+aria-label="Resumen de tareas"
+
+aria-label="Lista de tareas"
+
+
+============================================================
+PARTE 10 - GENERAR PRACTICE 09
+============================================================
+
+PASO 12 - PROMPT DE GENERACION
+------------------------------
+
+En Copilot Chat pegar:
+
+Implementa una nueva practica de automatizacion utilizando la arquitectura Screenplay existente del proyecto.
+
+Crea todo el codigo nuevo unicamente dentro de:
+
+test-automation/practices/day-03/practice-09/
+
+No modifiques Practice 08 ni ningun archivo existente.
+
+Usa Practice 08 como referencia arquitectonica.
+
+El escenario debe realizar exactamente lo siguiente:
+
+1. Crear una nueva tarea mediante la API POST /api/tasks.
+2. Obtener el id de la tarea creada.
+3. Abrir la aplicacion en http://localhost:4200.
+4. Localizar la tarea creada utilizando un localizador estable.
+5. Eliminar esa tarea mediante la interfaz de usuario.
+6. Consultar mediante API GET /api/tasks/{id}.
+7. Verificar que la API responde HTTP 404.
+
+Requisitos:
+
+- Usa Serenity/JS 3.37.1.
+- Usa Screenplay Pattern.
+- Manten separadas las responsabilidades de Tasks, Questions, State/UI Model y Models cuando corresponda.
+- Usa CallAnApi para las interacciones API.
+- Usa los localizadores reales que observaste mediante Playwright MCP.
+- No uses page.waitForTimeout().
+- No inventes APIs o metodos.
+- No introduzcas secretos ni credenciales.
+- El test debe ser independiente.
+- Usa datos unicos.
+- No modifiques codigo fuera de practice-09.
+
+Puedes crear los archivos necesarios.
+
+IMPORTANTE:
+
+No ejecutes el test todavia.
+
+No corrijas automaticamente posibles errores despues de generar el codigo.
+
+Cuando termines, indicame unicamente:
+
+1. Que archivos creaste.
+2. Que responsabilidad tiene cada archivo.
+3. Que decisiones de localizacion tomaste.
+4. Que APIs de Serenity/JS utilizaste.
+
+
+PEDAGOGICAMENTE
+---------------
+
+Instrucciones
+    +
+Custom Agent
+    +
+Practice 08
+    +
+Playwright MCP
+    +
+Prompt
+    |
+    v
+CODIGO GENERADO
+    |
+    v
+TODAVIA NO CONFIAMOS
+
+
+============================================================
+PARTE 11 - INSPECCIONAR EL CODIGO GENERADO
+============================================================
+
+PASO 13 - LISTAR ARCHIVOS
+-------------------------
+
+Ejecutar:
+
+$REPO = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot"
+$P9 = $REPO + "\test-automation\practices\day-03\practice-09"
+
+Set-Location $REPO
+
+Get-ChildItem $P9 -Recurse -File | ForEach-Object {
+    $_.FullName.Replace($REPO + "\", "")
+}
+
+git status --short
+
+
+ESTRUCTURA INICIAL QUE OBTUVIMOS
+--------------------------------
+
+api-ui-delete-screenplay.spec.ts
+
+screenplay\models\TodoItem.ts
+
+screenplay\questions\CreatedTodoId.ts
+
+screenplay\state\TodoList.ts
+
+screenplay\tasks\CreateTodoViaApi.ts
+
+screenplay\tasks\DeleteTodoViaUi.ts
+
+screenplay\tasks\VerifyTodoDeletedViaApi.ts
+
+
+PASO 14 - MOSTRAR CONTENIDO
+---------------------------
+
+Ejecutar:
+
+Get-ChildItem $P9 -Recurse -File | ForEach-Object {
+    Write-Host ""
+    Write-Host "============================================================"
+    Write-Host $_.FullName.Replace($REPO + "\", "")
+    Write-Host "============================================================"
+    Get-Content $_.FullName
+}
+
+
+IMPORTANTE
+----------
+
+No ejecutar Playwright todavia.
+
+
+============================================================
+PARTE 12 - REVISION HUMANA INICIAL
+============================================================
+
+PASO 15 - CHECKLIST
+-------------------
+
+Revisar:
+
+[ ] APIs inventadas
+[ ] Imports
+[ ] Serenity/JS 3.37.1
+[ ] Screenplay
+[ ] Localizadores
+[ ] Esperas
+[ ] Independencia
+[ ] Datos unicos
+[ ] Cleanup
+[ ] Secretos
+[ ] Credenciales
+
+
+HALLAZGOS REALES
+----------------
+
+APIs inventadas:
+
+CORRECTO
+
+
+Compatibilidad Serenity/JS:
+
+CORRECTO
+
+
+Screenplay:
+
+CORRECTO
+
+
+Datos unicos:
+
+CORRECTO
+
+Se utilizo:
+
+Date.now()
+
+
+Secretos:
+
+CORRECTO
+
+
+page.waitForTimeout():
+
+CORRECTO
+
+No se utilizo.
+
+
+Localizador de tarea:
+
+CORRECTO
+
+data-testid="task-<id>"
+
+
+Localizador de eliminar:
+
+CORRECTO para nuestro escenario.
+
+aria-label="Eliminar <title>"
+
+
+OBSERVACION
+-----------
+
+El titulo se concatena dentro de CSS.
+
+Si tuviera caracteres especiales, el selector podria necesitar otra
+estrategia.
+
+
+HALLAZGO IMPORTANTE
+-------------------
+
+Despues de:
+
+Click.on(...)
+
+el spec continuaba inmediatamente con:
+
+GET /api/tasks/{id}
+
+
+No habia una condicion observable que confirmara que la eliminacion habia
+terminado.
+
+
+Posible carrera:
+
+Click
+  |
+  v
+Angular inicia DELETE
+  |
+  v
+test continua
+  |
+  v
+GET /api/tasks/{id}
+
+
+============================================================
+PARTE 13 - EJECUTAR EL CODIGO CANDIDATO
+============================================================
+
+PASO 16 - DESCUBRIMIENTO
+------------------------
+
+Ejecutar:
+
+$REPO = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot"
+$TEST_AUTOMATION = $REPO + "\test-automation"
+
+Set-Location $TEST_AUTOMATION
+
+npx.cmd playwright test "practices/day-03/practice-09/api-ui-delete-screenplay.spec.ts" --list
+
+
+RESULTADO
+---------
+
+Total: 1 test in 1 file
+
+
+PASO 17 - EJECUTAR UNA VEZ
+--------------------------
+
+npx.cmd playwright test "practices/day-03/practice-09/api-ui-delete-screenplay.spec.ts" --reporter=line
+
+
+RESULTADO REAL
+--------------
+
+Running 1 test using 1 worker
+
+1 passed
+
+
+IMPORTANTE
+----------
+
+Una ejecucion exitosa no demuestra que el test sea robusto.
+
+
+PASO 18 - EJECUTAR 10 VECES
+----------------------------
+
+npx.cmd playwright test "practices/day-03/practice-09/api-ui-delete-screenplay.spec.ts" --repeat-each=10 --workers=1 --reporter=line
+
+
+RESULTADO REAL
+--------------
+
+Running 10 tests using 1 worker
+
+10 passed
+
+
+IMPORTANTE
+----------
+
+No observamos flakiness.
+
+Pero 10 passed NO demuestra que la carrera sea imposible.
+
+
+============================================================
+PARTE 14 - CODE REVIEW ASISTIDO POR COPILOT
+============================================================
+
+PASO 19
+-------
+
+En Copilot Chat con Test Automation seleccionado pegar:
+
+Revisa criticamente el codigo que acabas de generar dentro de:
+
+test-automation/practices/day-03/practice-09/
+
+No modifiques ningun archivo todavia.
+
+Ya validamos lo siguiente:
+
+- Playwright reconoce 1 test.
+- El test paso correctamente una vez.
+- El test tambien paso 10 de 10 ejecuciones consecutivas con --workers=1.
+
+Quiero una revision tecnica enfocada especificamente en:
+
+1. APIs o metodos que pudieran no existir en Serenity/JS 3.37.1.
+2. Imports incorrectos o innecesarios.
+3. Robustez de los localizadores.
+4. Estrategias de espera y posibles condiciones de carrera.
+5. Independencia del test.
+6. Manejo y limpieza de los datos creados.
+7. Secretos, credenciales o problemas de seguridad.
+8. Separacion correcta de responsabilidades Screenplay.
+9. Posibles casos en los que el test podria pasar actualmente pero seguir siendo fragil.
+
+Presta especial atencion al flujo:
+
+Click en el boton Eliminar
+|
+v
+GET /api/tasks/{id}
+|
+v
+esperar HTTP 404
+
+Determina si existe alguna condicion observable que confirme que la eliminacion termino antes de ejecutar el GET.
+
+No hagas cambios.
+
+Al final clasifica cada hallazgo como:
+
+- CORRECTO
+- MEJORABLE
+- PROBLEMA
+
+y explica brevemente por que.
+
+
+CLASIFICACION QUE OBTUVIMOS
+---------------------------
+
+APIs Serenity/JS 3.37.1:
+
+CORRECTO
+
+
+Imports:
+
+CORRECTO
+
+
+Localizadores:
+
+MEJORABLE
+
+
+Esperas y carrera de eliminacion:
+
+PROBLEMA
+
+
+Independencia:
+
+MEJORABLE
+
+
+Limpieza:
+
+PROBLEMA
+
+
+Seguridad:
+
+CORRECTO
+
+
+Screenplay:
+
+CORRECTO
+
+
+Fragilidad residual:
+
+MEJORABLE
+
+
+PROBLEMA 1
+----------
+
+El Click no garantiza que el DELETE haya terminado.
+
+
+PROBLEMA 2
+----------
+
+No habia cleanup si el test fallaba despues del POST.
+
+
+============================================================
+PARTE 15 - CORRECCION 1: SINCRONIZACION
+============================================================
+
+PASO 20
+-------
+
+Pegar en Copilot:
+
+Corrige unicamente el problema de sincronizacion detectado en Practice 09.
+
+No cambies ninguna otra parte de la prueba.
+
+Archivo a modificar:
+
+test-automation/practices/day-03/practice-09/screenplay/tasks/DeleteTodoViaUi.ts
+
+Despues de hacer click en el boton Eliminar, agrega una condicion observable que espere hasta que la tarea deje de estar visible antes de continuar con la verificacion por API.
+
+Requisitos:
+
+- Manten Serenity/JS 3.37.1.
+- No uses page.waitForTimeout().
+- Usa Ensure.eventually.
+- Reutiliza TodoList.taskWithId(todo.id).
+- Usa una expectativa negada sobre isVisible() si esa API esta disponible en la version instalada.
+- Antes de utilizar cualquier API nueva, verifica que exista realmente en las dependencias instaladas.
+- No modifiques ningun otro archivo.
+- No ejecutes el test todavia.
+
+Cuando termines, indicame exactamente que cambiaste.
+
+
+COPILOT VERIFICO
+----------------
+
+not(...)
+
+existe en la version instalada.
+
+
+CAMBIO
+------
+
+Agrego conceptualmente:
+
+Ensure.eventually(
+    TodoList.taskWithId(todo.id),
+    not(isVisible())
+)
+
+
+FLUJO
+-----
+
+Click Eliminar
+      |
+      v
+esperar desaparicion
+      |
+      v
+GET /api/tasks/{id}
+      |
+      v
+404
+
+
+PASO 21 - VER EL ARCHIVO
+------------------------
+
+Ejecutar:
+
+$REPO = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot"
+$FILE = $REPO + "\test-automation\practices\day-03\practice-09\screenplay\tasks\DeleteTodoViaUi.ts"
+
+Get-Content $FILE
+
+git status --short
+
+
+PASO 22 - VALIDAR
+-----------------
+
+$REPO = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot"
+$TEST_AUTOMATION = $REPO + "\test-automation"
+
+Set-Location $TEST_AUTOMATION
+
+npx.cmd playwright test "practices/day-03/practice-09/api-ui-delete-screenplay.spec.ts" --list
+
+npx.cmd playwright test "practices/day-03/practice-09/api-ui-delete-screenplay.spec.ts" --reporter=line
+
+
+RESULTADO
+---------
+
+Total: 1 test in 1 file
+
+1 passed
+
+
+PASO 23 - REPETIR
+-----------------
+
+npx.cmd playwright test "practices/day-03/practice-09/api-ui-delete-screenplay.spec.ts" --repeat-each=10 --workers=1 --reporter=line
+
+
+RESULTADO
+---------
+
+10 passed
+
+
+============================================================
+PARTE 16 - CORRECCION 2: CLEANUP DE RESPALDO
+============================================================
+
+PASO 24
+-------
+
+Pegar en Copilot:
+
+Corrige unicamente el problema de cleanup de respaldo detectado en Practice 09.
+
+Objetivo:
+
+Si la tarea fue creada correctamente por API pero el escenario falla despues, el test debe intentar eliminar ese dato para no dejar basura en PostgreSQL.
+
+Trabaja unicamente dentro de:
+
+test-automation/practices/day-03/practice-09/
+
+Requisitos:
+
+1. Manten intacto el flujo funcional principal:
+   - crear tarea por API
+   - eliminar tarea por UI
+   - verificar por API que responde 404
+
+2. Usa try/finally en el spec para garantizar un intento de cleanup cuando exista un taskId creado.
+
+3. Manten el cleanup dentro de la arquitectura Screenplay y usa CallAnApi.
+
+4. Puedes crear una Task de cleanup especifica si es necesario.
+
+5. El cleanup debe ser seguro si la tarea ya fue eliminada correctamente mediante la UI.
+
+6. Antes de implementar:
+   - revisa backend/Program.cs para confirmar que devuelve DELETE /api/tasks/{id} cuando el recurso ya no existe;
+   - verifica cualquier API nueva de Serenity/JS contra la version instalada 3.37.1;
+   - reutiliza patrones existentes del repositorio cuando sea posible.
+
+7. No uses page.waitForTimeout().
+
+8. No uses el fixture request de Playwright para saltarte Screenplay.
+
+9. No modifiques archivos fuera de practice-09.
+
+10. No ejecutes el test todavia.
+
+No inventes APIs ni helpers de assertions.
+
+Cuando termines, indicame:
+
+1. Que archivos modificaste o creaste.
+2. Como funciona el try/finally.
+3. Como evitas que el cleanup falle cuando la tarea ya habia sido eliminada por la UI.
+4. Que comportamiento real del backend encontraste para DELETE sobre un id inexistente.
+
+
+COPILOT REVISO
+--------------
+
+backend/Program.cs
+
+
+Y confirmo:
+
+DELETE existente:
+
+204 No Content
+
+
+DELETE inexistente:
+
+404 Not Found
+
+
+Tambien verifico:
+
+or(...)
+
+en Serenity/JS 3.37.1.
+
+
+CAMBIOS
+-------
+
+Modifico:
+
+api-ui-delete-screenplay.spec.ts
+
+
+Creo:
+
+screenplay/tasks/CleanupTodoViaApi.ts
+
+
+CleanupTodoViaApi acepta:
+
+204
+
+o:
+
+404
+
+
+PASO 25 - INSPECCIONAR
+----------------------
+
+Ejecutar:
+
+$REPO = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot"
+$P9 = $REPO + "\test-automation\practices\day-03\practice-09"
+
+Get-ChildItem $P9 -Recurse -File | ForEach-Object {
+    Write-Host ""
+    Write-Host "============================================================"
+    Write-Host $_.FullName.Replace($REPO + "\", "")
+    Write-Host "============================================================"
+    Get-Content $_.FullName
+}
+
+git status --short
+
+
+============================================================
+PARTE 17 - HALLAZGO ADICIONAL DE CLEANUP
+============================================================
+
+PASO 26
+-------
+
+Despues del try/finally se detecto:
+
+POST
+ |
+ v
+CreateTodoViaApi valida title
+ |
+ v
+CreateTodoViaApi valida completed
+ |
+ v
+spec captura taskId
+
+
+PROBLEMA
+--------
+
+Si POST crea la tarea pero una assertion falla antes de capturar taskId:
+
+taskId sigue undefined
+
+y:
+
+finally no puede limpiar.
+
+
+FLUJO DESEADO
+-------------
+
+POST
+ |
+ v
+validar 201
+ |
+ v
+CAPTURAR taskId
+ |
+ v
+validar id
+ |
+ v
+validar title
+ |
+ v
+validar completed
+
+
+============================================================
+PARTE 18 - CORRECCION 3: CAPTURAR TASKID ANTES
+============================================================
+
+PASO 27
+-------
+
+Pegar en Copilot:
+
+Mejora unicamente el manejo de cleanup de Practice 09 para cubrir este caso:
+
+El POST /api/tasks puede haber creado correctamente la tarea, pero una validacion posterior de la respuesta podria fallar antes de que el spec haya guardado taskId.
+
+Actualmente CreateTodoViaApi valida title y completed antes de que el spec capture CreatedTodoId.
+
+Quiero que el flujo quede conceptualmente asi:
+
+1. Enviar POST /api/tasks.
+2. Confirmar que la creacion respondio correctamente.
+3. Capturar inmediatamente el id mediante CreatedTodoId.
+4. Despues validar los demas datos de la respuesta de creacion.
+5. Continuar con UI y verificacion final.
+6. El finally debe poder limpiar usando taskId si cualquier paso posterior falla.
+
+Manten la arquitectura Screenplay.
+
+Puedes crear una Task separada para validar la respuesta de creacion.
+
+Requisitos:
+
+- Serenity/JS 3.37.1.
+- No inventes APIs.
+- No modifiques archivos fuera de practice-09.
+- Manten el try/finally.
+- Manten CleanupTodoViaApi.
+- No ejecutes el test.
+- No cambies el escenario funcional.
+
+Cuando termines explicame:
+
+1. Que archivos cambiaste.
+2. En que momento exacto se captura taskId.
+3. Que validaciones quedaron despues de capturar el ID.
+
+
+RESULTADO
+---------
+
+CreateTodoViaApi ahora:
+
+- ejecuta POST;
+- valida 201.
+
+
+Luego:
+
+taskId = await actor.answer(
+    CreatedTodoId()
+)
+
+
+Despues:
+
+VerifyTodoCreatedViaApi
+
+
+valida:
+
+- id;
+- title;
+- completed == false.
+
+
+ARCHIVOS FINALES
+----------------
+
+api-ui-delete-screenplay.spec.ts
+
+screenplay/models/TodoItem.ts
+
+screenplay/questions/CreatedTodoId.ts
+
+screenplay/state/TodoList.ts
+
+screenplay/tasks/CleanupTodoViaApi.ts
+
+screenplay/tasks/CreateTodoViaApi.ts
+
+screenplay/tasks/DeleteTodoViaUi.ts
+
+screenplay/tasks/VerifyTodoCreatedViaApi.ts
+
+screenplay/tasks/VerifyTodoDeletedViaApi.ts
+
+
+FLUJO FINAL
+-----------
+
+POST /api/tasks
+      |
+      v
+201
+      |
+      v
+capturar taskId
+      |
+      v
+validar id/title/completed
+      |
+      v
+abrir UI
+      |
+      v
+localizar task-<id>
+      |
+      v
+Click Eliminar
+      |
+      v
+esperar desaparicion
+      |
+      v
+GET /api/tasks/{id}
+      |
+      v
+404
+      |
+      v
+finally
+      |
+      v
+DELETE respaldo
+      |
+      +-- 204
+      |
+      +-- 404
+
+
+============================================================
+PARTE 19 - VALIDACION FINAL
+============================================================
+
+PASO 28 - DESCUBRIMIENTO
+------------------------
+
+Ejecutar:
+
+$REPO = "C:\Users\student\Desktop\test-automation-playwright-screenplay-copilot"
+$TEST_AUTOMATION = $REPO + "\test-automation"
+
+Set-Location $TEST_AUTOMATION
+
+npx.cmd playwright test "practices/day-03/practice-09/api-ui-delete-screenplay.spec.ts" --list
+
+
+RESULTADO FINAL
+---------------
+
+Total: 1 test in 1 file
+
+
+PASO 29 - EJECUCION
+-------------------
+
+npx.cmd playwright test "practices/day-03/practice-09/api-ui-delete-screenplay.spec.ts" --reporter=line
+
+
+RESULTADO FINAL
+---------------
+
+Running 1 test using 1 worker
+
+1 passed
+
+
+PASO 30 - REPETIR
+-----------------
+
+npx.cmd playwright test "practices/day-03/practice-09/api-ui-delete-screenplay.spec.ts" --repeat-each=10 --workers=1 --reporter=line
+
+
+RESULTADO FINAL
+---------------
+
+Running 10 tests using 1 worker
+
+10 passed
+
+
+PASO 31 - CLEANUP
+-----------------
+
+Ejecutar:
+
+$TASKS = Invoke-RestMethod -Method Get -Uri "http://localhost:8080/api/tasks"
+
+$P9_TASKS = @(
+    $TASKS | Where-Object {
+        $_.title -like "P9 Screenplay UI deletion *"
+    }
+)
+
+Write-Host "P9 tasks remaining:" $P9_TASKS.Count
+
+$P9_TASKS | Format-Table id, title, completed
+
+
+RESULTADO FINAL
+---------------
+
+P9 tasks remaining: 0
+
+
+CRITERIO FINAL
+--------------
+
+Total: 1 test in 1 file
+
+1 passed
+
+10 passed
+
+P9 tasks remaining: 0
+
+
+============================================================
+PARTE 20 - ERRORES DIFERENTES DURANTE LA CLASE
+============================================================
+
+IMPORTANTE
+----------
+
+No todos los participantes obtendran los mismos errores.
+
+Pueden aparecer:
+
+- API inexistente;
+- import incorrecto;
+- selector roto;
+- timeout;
+- 404 inesperado;
+- 200 inesperado;
+- MCP detenido;
+- test no descubierto;
+- dato residual;
+- error TypeScript;
+- error Serenity/JS;
+- problema Docker;
+- problema frontend;
+- problema backend;
+- problema PostgreSQL.
+
+
+METODO GENERAL
+--------------
+
+ERROR REAL
+   |
+   v
+COPILOT ANALIZA CONTEXTO
+   |
+   v
+VERIFICA VERSIONES
+   |
+   v
+DIAGNOSTICO
+   |
+   v
+CAMBIO MINIMO
+   |
+   v
+REVALIDACION
+
+
+PASO 32 - PROMPT BASE PARA CUALQUIER ERROR
+------------------------------------------
+
+En Copilot Chat con Test Automation:
+
+Tengo un problema durante la ejecucion de esta practica de automatizacion.
+
+Analiza el problema utilizando el contexto real de este repositorio.
+
+ERROR O SALIDA OBTENIDA:
+
+[PEGAR AQUI EL ERROR COMPLETO O LA SALIDA DE LA TERMINAL]
+
+COMANDO O ACCION QUE PRODUJO EL PROBLEMA:
+
+[PEGAR AQUI EL COMANDO, PASO O ACCION]
+
+RESULTADO QUE ESPERABA:
+
+[DESCRIBIR BREVEMENTE QUE DEBERIA HABER OCURRIDO]
+
+Antes de realizar cambios:
+
+1. Revisa los archivos relacionados con el error.
+2. Revisa las instrucciones y arquitectura existentes del repositorio.
+3. Verifica las versiones reales instaladas en package.json.
+4. Verifica que cualquier API, metodo, import o clase que propongas exista realmente en las versiones instaladas.
+5. Si el problema esta relacionado con la interfaz, utiliza Playwright MCP para inspeccionar la aplicacion real cuando sea necesario.
+6. No inventes APIs, metodos, selectores ni comportamiento del sistema.
+7. No uses page.waitForTimeout() como solucion de sincronizacion.
+8. No introduzcas secretos, credenciales ni valores sensibles.
+9. Manten la arquitectura Screenplay existente.
+10. Evita modificar archivos que no esten relacionados con el problema.
+
+Primero explicame:
+
+- cual es la causa probable;
+- que evidencia encontraste;
+- que archivo o archivos estan involucrados;
+- cual es el cambio minimo recomendado.
+
+Despues aplica la correccion necesaria.
+
+Al terminar:
+
+1. Indica exactamente que archivos modificaste.
+2. Explica brevemente que cambiaste.
+3. Indica que comando debo ejecutar para validar la solucion.
+4. No realices cambios adicionales que no sean necesarios para resolver este problema.
+
+
+PASO 33 - PROMPT RAPIDO SI FALLA UN TEST
+----------------------------------------
+
+La siguiente prueba automatizada esta fallando:
+
+[PEGAR ERROR COMPLETO]
+
+Analiza el fallo usando el codigo y la configuracion reales del repositorio.
+
+No asumas la causa.
+
+Revisa primero:
+
+- el spec que falla;
+- Tasks, Questions, State/UI Model y Models relacionados;
+- las versiones instaladas;
+- los localizadores reales;
+- las esperas y condiciones observables;
+- datos de prueba y cleanup;
+- comportamiento real de API y UI cuando sea necesario.
+
+Si necesitas inspeccionar la aplicacion, utiliza Playwright MCP.
+
+Identifica la causa con evidencia y realiza unicamente la correccion minima necesaria.
+
+No inventes APIs.
+No uses esperas arbitrarias.
+No cambies archivos no relacionados.
+
+Despues indicame que cambiaste y como debo volver a validar la prueba.
+
+
+PASO 34 - SI COPILOT PROPONE UNA API NUEVA
+------------------------------------------
+
+Antes de utilizar esa API, metodo, clase o helper:
+
+1. Confirma la version instalada del paquete correspondiente.
+2. Verifica que la API exista realmente en esa version.
+3. Busca evidencia en node_modules, tipos instalados o codigo existente del repositorio.
+4. No utilices documentacion de una version posterior como unica evidencia.
+5. Si la API no existe, busca una alternativa compatible con las dependencias actuales.
+
+No modifiques codigo hasta terminar esta verificacion.
+
+
+PASO 35 - SI FALLA UN LOCALIZADOR
+---------------------------------
+
+El problema parece estar relacionado con un localizador de UI.
+
+Antes de cambiar el selector:
+
+1. Usa Playwright MCP para abrir la aplicacion real.
+2. Inspecciona el elemento afectado.
+3. Revisa atributos de accesibilidad.
+4. Revisa data-testid disponibles.
+5. Revisa si ya existe un localizador equivalente en el State/UI Model.
+6. No inventes selectores.
+7. Propone el selector mas estable encontrado.
+8. Manten los selectores centralizados dentro de la arquitectura existente.
+
+Explicame la evidencia antes de modificar codigo.
+
+
+PASO 36 - SI HAY TIMEOUT O SINCRONIZACION
+-----------------------------------------
+
+Analiza este timeout o problema de sincronizacion.
+
+No uses page.waitForTimeout() como solucion.
+
+Busca una condicion observable que represente el estado real que debe alcanzar la aplicacion.
+
+Revisa:
+
+- visibilidad;
+- desaparicion;
+- atributos;
+- estado del elemento;
+- respuesta de API;
+- comportamiento real del frontend;
+- comportamiento real del backend.
+
+Usa Ensure.eventually u otra estrategia compatible con Serenity/JS 3.37.1 solo despues de confirmar que la API existe.
+
+Realiza solamente el cambio minimo necesario.
+
+
+PASO 37 - DESPUES DE CUALQUIER CORRECCION
+-----------------------------------------
+
+Volver a ejecutar:
+
+npx.cmd playwright test "practices/day-03/practice-09/api-ui-delete-screenplay.spec.ts" --list
+
+
+Despues:
+
+npx.cmd playwright test "practices/day-03/practice-09/api-ui-delete-screenplay.spec.ts" --reporter=line
+
+
+Cuando corresponda:
+
+npx.cmd playwright test "practices/day-03/practice-09/api-ui-delete-screenplay.spec.ts" --repeat-each=10 --workers=1 --reporter=line
+
+
+Y volver a comprobar cleanup.
+
+
+============================================================
+PARTE 21 - CHECKLIST FINAL
+============================================================
+
+[ ] Version real de Serenity/JS confirmada.
+
+[ ] APIs realmente disponibles.
+
+[ ] Imports correctos.
+
+[ ] No existen APIs inventadas.
+
+[ ] No se usaron APIs de otra version.
+
+[ ] Spec limitado a orquestacion.
+
+[ ] Tasks separadas.
+
+[ ] Questions separadas.
+
+[ ] State/UI Model centralizado.
+
+[ ] Models separados.
+
+[ ] Localizadores comparados contra UI real.
+
+[ ] data-testid cuando corresponde.
+
+[ ] No page.waitForTimeout().
+
+[ ] Esperas observables.
+
+[ ] Test independiente.
+
+[ ] Datos unicos.
+
+[ ] Cleanup.
+
+[ ] Cleanup ante fallos intermedios.
+
+[ ] 404 de cleanup comprendido correctamente.
+
+[ ] No passwords.
+
+[ ] No tokens.
+
+[ ] No API keys.
+
+[ ] No secretos.
+
+[ ] No credenciales.
+
+[ ] Playwright descubre el test.
+
+[ ] Ejecucion real realizada.
+
+[ ] Repeticiones realizadas.
+
+[ ] Estado final de datos comprobado.
+
+
+============================================================
+RESUMEN CRONOLOGICO
+============================================================
+
+1. Se partio de practica_08.
+
+2. Se creo practica_09.
+
+3. Se creo copilot-instructions.md.
+
+4. Se creo test-automation.instructions.md.
+
+5. Se creo AGENTS.md.
+
+6. Se creo Test Automation Agent.
+
+7. Se abrio Visual Studio Code.
+
+8. Se abrio Copilot Chat.
+
+9. Se selecciono Test Automation.
+
+10. Se valido el contexto.
+
+11. Copilot identifico Serenity/JS 3.37.1.
+
+12. Copilot identifico Practice 08.
+
+13. Se creo .mcp.json.
+
+14. Se abrio MCP: List Servers.
+
+15. Se selecciono playwright.
+
+16. Se inicio el servidor.
+
+17. MCP abrio http://localhost:4200.
+
+18. MCP inspecciono la aplicacion.
+
+19. Se identificaron localizadores reales.
+
+20. Copilot genero Practice 09.
+
+21. Creo inicialmente 7 archivos.
+
+22. Se inspecciono el codigo antes de ejecutarlo.
+
+23. Se detecto posible carrera Click -> GET.
+
+24. --list encontro 1 test.
+
+25. El test paso una vez.
+
+26. El test paso 10 veces.
+
+27. Se hizo code review aun cuando todo pasaba.
+
+28. Copilot confirmo el problema de sincronizacion.
+
+29. Copilot detecto falta de cleanup.
+
+30. Se corrigio sincronizacion.
+
+31. Se agrego espera por desaparicion.
+
+32. Se valido nuevamente.
+
+33. Se ejecuto 10 veces nuevamente.
+
+34. Se pidio cleanup.
+
+35. Copilot reviso Program.cs.
+
+36. Confirmo DELETE 204.
+
+37. Confirmo DELETE 404 si ya no existe.
+
+38. Verifico or(...).
+
+39. Creo CleanupTodoViaApi.
+
+40. Agrego try/finally.
+
+41. Se detecto otro borde.
+
+42. taskId se capturaba demasiado tarde.
+
+43. Se pidio una tercera correccion.
+
+44. CreateTodoViaApi quedo validando 201.
+
+45. taskId se captura inmediatamente.
+
+46. Se creo VerifyTodoCreatedViaApi.
+
+47. Se realizo validacion final.
+
+48. --list encontro 1 test.
+
+49. 1 passed.
+
+50. 10 passed.
+
+51. Cleanup final:
+
+P9 tasks remaining: 0
+
+
+============================================================
+FIN DE PRACTICA 09
+============================================================
